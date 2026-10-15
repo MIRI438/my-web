@@ -150,40 +150,68 @@
       </div>
     </section>
 
-    <!-- LIVE DEMO: leads -> automation -> CRM -->
+    <!-- LIVE DEMO: the business's lead system + the customer's phone -->
     <section class="demo" id="demo" data-nav="light">
       <div class="demo__head">
         <p class="eyebrow">הדגמה חיה</p>
-        <h2>לחצו, ותראו את זה קורה.</h2>
-        <p>בחרו מאיפה מגיע ליד. מערכת ה־CRM תיפתח, ותראו בזמן אמת איך הליד נכנס, מקבל ציון ומקבל תשובה בוואטסאפ, בלי שאף אחד נוגע בכלום.</p>
+        <h2>ככה זה ייראה אצלכם.</h2>
+        <p>מימין, מערכת הלידים של העסק. משמאל, הטלפון של הלקוח. בחרו איך הלקוח פונה, ותראו מה קורה בשני הצדדים, בלי שאף אחד מהצוות נוגע בכלום.</p>
       </div>
-      <div class="demo__stage" id="demo-stage">
-        <div class="src">
-          <p class="demo__label">1. מאיפה מגיע הליד? לחצו על אחד</p>
-          <div class="src__grid">
-            <button type="button" class="src__btn" data-src="whatsapp"><span class="src__icon" aria-hidden="true"></span><span>וואטסאפ</span></button>
-            <button type="button" class="src__btn" data-src="email"><span class="src__icon" aria-hidden="true"></span><span>מייל</span></button>
-            <button type="button" class="src__btn" data-src="facebook"><span class="src__icon" aria-hidden="true"></span><span>פייסבוק</span></button>
-            <button type="button" class="src__btn" data-src="instagram"><span class="src__icon" aria-hidden="true"></span><span>אינסטגרם</span></button>
-            <button type="button" class="src__btn" data-src="site"><span class="src__icon" aria-hidden="true"></span><span>טופס באתר</span></button>
-            <button type="button" class="src__btn" data-src="phone"><span class="src__icon" aria-hidden="true"></span><span>שיחה שלא נענתה</span></button>
-          </div>
-          <form class="try" id="try-form">
-            <label for="try-name">או כתבו את השם שלכם, ותראו את עצמכם נכנסים למערכת:</label>
-            <div class="try__row"><input id="try-name" name="try-name" type="text" maxlength="24" placeholder="השם שלכם" autocomplete="off" /><button type="submit">שליחה</button></div>
-          </form>
+
+      <div class="inbox">
+        <p class="inbox__label">לקוח פונה אל העסק דרך:</p>
+        <div class="inbox__row" id="inbox"></div>
+        <form class="try" id="try-form">
+          <label for="try-name">או כתבו את השם שלכם ותהיו הלקוח:</label>
+          <div class="try__row"><input id="try-name" name="try-name" type="text" maxlength="24" placeholder="השם שלכם" autocomplete="off" /><button type="submit">לשלוח פנייה</button></div>
+        </form>
+      </div>
+
+      <div class="theater" id="demo-stage">
+        <div class="narr" aria-live="polite">
+          <ol class="narr__steps" aria-hidden="true"><li>נכנס</li><li>ציון</li><li>תשובה</li><li>שיוך</li><li>סיום</li></ol>
+          <p class="narr__text" id="narr-text"></p>
         </div>
 
-        <div class="crm-mini">
-          <p class="demo__label">2. מה כבר נמצא במערכת</p>
-          <div class="crm-mini__box">
-            <div class="crm-mini__head"><span>לידים אחרונים</span><span class="live"><i></i>LIVE</span></div>
-            <ul class="mini" id="mini-list" aria-live="polite"></ul>
+        <div class="theater__row">
+          <div class="screen" id="crm">
+            <div class="screen__bar">
+              <span class="screen__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="screen__url" dir="ltr">crm.your-business.co.il</span>
+              <button type="button" class="screen__full" id="crm-full">מסך מלא</button>
+            </div>
+            <div class="app">
+              <header class="app__top">
+                <div class="app__brand">מערכת הלידים<small>העסק שלכם</small></div>
+                <nav class="app__tabs" aria-label="תצוגות המערכת">
+                  <button type="button" class="is-active" data-view="leads">לידים</button>
+                  <button type="button" data-view="auto">אוטומציות</button>
+                </nav>
+                <div class="app__stats" id="app-stats"></div>
+              </header>
+              <div class="app__body">
+                <div class="view-leads" id="view-leads">
+                  <div class="ltable" id="lead-table"></div>
+                  <aside class="detail" id="detail" aria-label="פרטי הליד"></aside>
+                </div>
+                <div class="view-auto" id="view-auto" hidden></div>
+              </div>
+            </div>
           </div>
-          <button type="button" class="crm-mini__open" id="crm-open" data-cursor="כניסה">כניסה למערכת ה־CRM <span aria-hidden="true">←</span></button>
+
+          <div class="phone-wrap">
+            <div class="phone" aria-label="הטלפון של הלקוח">
+              <div class="phone__head">
+                <span class="phone__avatar" aria-hidden="true"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="14" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="66 21.96"/><circle cx="31.2" cy="11.6" r="4.6" fill="currentColor"/></svg></span>
+                <div><b>העסק שלכם</b><small id="phone-status">מקוון/ת</small></div>
+              </div>
+              <div class="phone__chat" id="phone-chat"></div>
+            </div>
+            <p class="phone__who" id="phone-who"></p>
+          </div>
         </div>
       </div>
-      <p class="demo__note">הנתונים בהדגמה מומצאים. ככה נראית מערכת שאנחנו בונים ללקוחות, מותאמת לעסק שלכם.</p>
+      <p class="demo__note">הנתונים בהדגמה מומצאים. מערכת אמיתית נבנית לפי הכלים והתהליכים של העסק שלכם.</p>
     </section>
 
     <!-- PROCESS: stacking cards -->
@@ -275,33 +303,6 @@
       </footer>
     </section>
   </main>
-
-  <!-- sample CRM app -->
-  <div class="crm" id="crm" hidden data-lenis-prevent role="dialog" aria-modal="true" aria-label="מערכת CRM לדוגמה">
-    <aside class="crm__side">
-      <div class="crm__logo"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="14" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="66 21.96"/><circle cx="31.2" cy="11.6" r="4.6" fill="currentColor"/></svg>CRM</div>
-      <nav class="crm__nav" aria-label="תפריט המערכת">
-        <button type="button" class="is-active" data-view="board">לוח לידים</button>
-        <button type="button" data-view="auto">אוטומציות</button>
-        <button type="button" data-view="reports">דוחות</button>
-      </nav>
-      <span class="crm__demo">מצב הדגמה</span>
-    </aside>
-    <div class="crm__main">
-      <header class="crm__top">
-        <h3 id="crm-title">לוח לידים</h3>
-        <input type="search" id="crm-search" placeholder="חיפוש לפי שם, טלפון או נושא" aria-label="חיפוש ליד" />
-        <button type="button" class="crm__add" id="crm-sim">+ ליד חדש</button>
-        <button type="button" class="crm__close" id="crm-close" aria-label="יציאה מהמערכת">×</button>
-      </header>
-      <div class="crm__kpis" id="crm-kpis"></div>
-      <div class="crm__view" id="view-board"><div class="board" id="board"></div><p class="board__hint">גררו כרטיס בין העמודות, או לחצו עליו כדי לראות את כל הפרטים.</p></div>
-      <div class="crm__view" id="view-auto" hidden></div>
-      <div class="crm__view" id="view-reports" hidden></div>
-    </div>
-    <aside class="drawer" id="drawer" hidden aria-label="כרטיס ליד"></aside>
-    <div class="crm__toast" id="crm-toast" role="status" hidden></div>
-  </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
