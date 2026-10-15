@@ -133,27 +133,45 @@
     setTimeout(() => { lead.screen = "chat"; lead.typing = true; renderPhone(); show(stageEl.querySelector(".phone")); }, T(D + 2800));
     setTimeout(() => { lead.typing = false; }, T(D + 3440));
     step("assign", D + 4200, () => show(card));
+    // the four steps are done; the card then keeps moving on its own
+    const tail = D + 5400;
+    setTimeout(() => {
+      stageEl.classList.remove("is-running");
+      result.classList.add("on");
+      phoneCap.textContent = "הלקוח";
+    }, T(tail));
+    const now = () => Date.now();
+    const follow = [
+      [1700, () => {
+        lead.chat.push({ who: "me", text: "קבעתי דרך הקישור לחמישי בשעה 10:00", t: now() });
+        advance(2);
+      }],
+      [2500, () => lead.chat.push({ who: "biz", text: "מעולה, נתראה בחמישי בשעה 10:00! נשלח תזכורת יום לפני.", t: now() })],
+      [4300, () => {
+        advance(3);
+        lead.chat.push({ who: "biz", text: "בהמשך לפגישה, הצעת המחיר מצורפת:", file: "proposal.pdf", t: now() });
+      }],
+      [5900, () => lead.chat.push({ who: "me", text: "מעולה, סוגרים!", t: now() })],
+      [6900, () => {
+        advance(4);
+        lead.chat.push({ who: "biz", text: "תודה שבחרת בנו! החשבונית מצורפת.", file: "invoice.pdf", t: now() });
+      }],
+    ];
+    follow.forEach(([ms, fn]) => setTimeout(() => { fn(); render(); ping(); }, T(tail + ms)));
     setTimeout(() => {
       running = false;
       inbox.classList.remove("is-busy");
-      stageEl.classList.remove("is-running");
       stageEl.classList.add("is-done");
-      result.classList.add("on");
       guide = false;
-      phoneCap.textContent = "הלקוח";
       render();
-    }, T(D + 5400));
+    }, T(tail + 7800));
   }
 
-  /* ---------- stage clicks: more automations ---------- */
-  function setStage(i) {
-    if (!lead || running || lead.stage === i) return;
-    lead.stage = i; lead.just.add("stage");
-    stageEl.classList.remove("is-done");
-    if (STAGES[i][0] === "meeting") lead.chat.push({ who: "biz", text: "הפגישה נקבעה לחמישי ב-10:00. נשלח תזכורת יום לפני.", t: Date.now() });
-    if (STAGES[i][0] === "proposal") lead.chat.push({ who: "biz", text: "הצעת המחיר מחכה לך כאן:", file: "proposal.pdf", t: Date.now() });
-    if (STAGES[i][0] === "won") lead.chat.push({ who: "biz", text: "תודה שבחרת בנו! החשבונית מצורפת.", file: "invoice.pdf", t: Date.now() });
-    render();
+  function advance(i) {
+    lead.stage = i;
+    lead.just.add("stage");
+  }
+  function ping() {
     const ph = stageEl.querySelector(".phone");
     ph.classList.remove("ping"); void ph.offsetWidth; ph.classList.add("ping");
   }
@@ -192,14 +210,12 @@
         ${d.card ? `<p>${esc(s.msg)}</p>` : sk("sk--wide")}
       </div>
       <ol class="lc-steps" aria-label="שלב">
-        ${STAGES.map(([, n], i) => `<li><button type="button" data-i="${i}" class="${i < l.stage ? "past" : ""} ${i === l.stage ? "now" : ""} ${i === l.stage && j.has("stage") ? "just" : ""}" ${running ? "disabled" : ""}><i></i>${n}</button></li>`).join("")}
+        ${STAGES.map(([, n], i) => `<li class="${i < l.stage ? "past" : ""} ${i === l.stage ? "now" : ""} ${i === l.stage && j.has("stage") ? "just" : ""}"><i></i>${n}</li>`).join("")}
       </ol>
-      <div class="lc-hint" aria-hidden="true">לחצו על "לקוח" ותראו מה הלקוח מקבל<span class="hand"></span></div>
       <div class="lc-agent ${j.has("assign") ? "just" : ""}">
         ${d.assign ? `<span class="av av--sm">${l.agent[0]}</span><span>אצל <b>${l.agent}</b>${l.score >= 80 ? " · קיבל/ה התראה" : ""}</span>` : `<span class="av av--sm is-empty"></span>${sk("sk--sm")}`}
       </div>
 `;
-    card.querySelectorAll("[data-i]").forEach((b) => b.addEventListener("click", () => setStage(Number(b.dataset.i))));
     l.just.clear();
   }
 

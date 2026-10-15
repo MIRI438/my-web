@@ -114,21 +114,14 @@
 
 .lc-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); position: relative; }
 .lc-steps::before { content: ""; position: absolute; top: 11px; inset-inline: 10%; height: 2px; background: var(--app-line); }
-.lc-steps li { display: grid; justify-items: center; position: relative; }
-.lc-steps button { display: grid; justify-items: center; gap: 6px; background: none; border: 0; padding: 0; font: 500 0.78rem var(--body); color: var(--app-muted); cursor: pointer; }
-.lc-steps button:disabled { cursor: default; }
-.lc-steps button i { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #d4d4d8; background: #fff; position: relative; z-index: 1; transition: all 0.3s; }
-.lc-steps button:hover:not(:disabled) i { border-color: var(--ink); transform: scale(1.1); }
-.lc-steps button.past i { background: var(--ink); border-color: var(--ink); }
-.lc-steps button.now { color: var(--ink); font-weight: 700; }
-.lc-steps button.now i { background: var(--cobalt); border-color: var(--cobalt); box-shadow: 0 0 0 5px rgba(42, 59, 255, 0.18); }
-.lc-steps button.just i { animation: pop 0.6s var(--ease); }
+.lc-steps li { display: grid; justify-items: center; gap: 6px; position: relative; font-size: 0.78rem; color: var(--app-muted); transition: color 0.3s; }
+.lc-steps li i { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #d4d4d8; background: #fff; position: relative; z-index: 1; transition: background 0.4s, border-color 0.4s, box-shadow 0.4s; }
+.lc-steps li.past i { background: var(--ink); border-color: var(--ink); }
+.lc-steps li.now { color: var(--ink); font-weight: 700; }
+.lc-steps li.now i { background: var(--cobalt); border-color: var(--cobalt); box-shadow: 0 0 0 5px rgba(42, 59, 255, 0.18); }
+.lc-steps li.just i { animation: pop 0.6s var(--ease); }
 .lc-agent { display: flex; align-items: center; gap: 10px; font-size: 0.92rem; padding-top: 14px; border-top: 1px solid var(--app-line); }
 
-.lc-hint { justify-self: end; margin-top: -10px; display: none; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 700; color: var(--cobalt); pointer-events: none; }
-.flowx.is-done .lc-hint { display: flex; animation: hint 1.2s ease-in-out infinite; }
-.hand { width: 14px; height: 14px; border-radius: 50%; background: var(--cobalt); box-shadow: 0 0 0 6px rgba(42, 59, 255, 0.2); }
-@keyframes hint { 50% { transform: translateY(-5px); } }
 
 /* skeletons + the moment a field fills itself */
 .sk { display: inline-block; vertical-align: middle; width: 110px; height: 0.9em; border-radius: 5px; background: linear-gradient(90deg, #ececea 0%, #f8f8f6 50%, #ececea 100%) 0 0 / 200% 100%; animation: shimmer 1.2s linear infinite; }
