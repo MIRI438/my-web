@@ -38,16 +38,47 @@
   });
 
   /* ---------- loader -> hero intro ---------- */
-  const counter = { n: 0 };
-  const loadN = document.getElementById("load-n");
-  const intro = gsap.timeline({ onComplete: () => lenis && lenis.start() });
+  // first visit in a session: play the logo reveal video; otherwise (or if the
+  // video cannot play quickly) fall back to the short counter
+  const intro = gsap.timeline({ paused: true, onComplete: () => lenis && lenis.start() });
   intro
-    .to(counter, { n: 100, duration: 1.6, ease: "power2.inOut", onUpdate: () => (loadN.textContent = Math.round(counter.n)) })
-    .to(".loader__bar span", { scaleX: 1, duration: 1.6, ease: "power2.inOut" }, 0)
-    .to(".loader", { yPercent: -100, duration: 1.1, ease: "power4.inOut" }, "+=0.15")
+    .to(".loader", { yPercent: -100, duration: 1.1, ease: "power4.inOut" })
     .to(".hero__title .line > span", { y: 0, duration: 1.3, ease: "power4.out", stagger: 0.12 }, "-=0.45")
     .to(".hero .reveal-up", { opacity: 1, y: 0, duration: 1, ease: "power3.out", stagger: 0.1 }, "-=0.9")
     .set(".loader", { display: "none" });
+  let introStarted = false;
+  const startIntro = () => { if (!introStarted) { introStarted = true; intro.play(); } };
+
+  const loaderEl = document.querySelector(".loader");
+  const video = loaderEl.querySelector(".loader__video");
+  let seen = false;
+  try { seen = sessionStorage.getItem("mirai-intro") === "1"; } catch (e) { /* storage blocked */ }
+
+  function counterIntro() {
+    loaderEl.classList.remove("loader--video");
+    const counter = { n: 0 };
+    const loadN = document.getElementById("load-n");
+    gsap.timeline({ onComplete: startIntro })
+      .to(counter, { n: 100, duration: seen ? 0.7 : 1.4, ease: "power2.inOut", onUpdate: () => (loadN.textContent = Math.round(counter.n)) })
+      .to(".loader__bar span", { scaleX: 1, duration: seen ? 0.7 : 1.4, ease: "power2.inOut" }, 0);
+  }
+
+  if (!seen && video && video.canPlayType) {
+    loaderEl.classList.add("loader--video");
+    const fallback = setTimeout(() => { video.pause(); counterIntro(); }, 1800);
+    const finish = () => {
+      try { sessionStorage.setItem("mirai-intro", "1"); } catch (e) { /* storage blocked */ }
+      gsap.to(".loader__brand", { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" });
+      gsap.delayedCall(0.7, startIntro);
+    };
+    video.addEventListener("playing", () => clearTimeout(fallback), { once: true });
+    video.addEventListener("ended", finish, { once: true });
+    loaderEl.querySelector(".loader__skip").addEventListener("click", () => { clearTimeout(fallback); video.pause(); finish(); });
+    const p = video.play();
+    if (p && p.catch) p.catch(() => { clearTimeout(fallback); counterIntro(); });
+  } else {
+    counterIntro();
+  }
 
   /* ---------- nav: color per section + hide on scroll down ---------- */
   const nav = document.getElementById("nav");

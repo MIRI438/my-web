@@ -16,6 +16,12 @@
 <body>
   <!-- preloader -->
   <div class="loader" aria-hidden="true">
+    <video class="loader__video" muted playsinline preload="auto">
+      <source src="assets/video/intro.webm" type="video/webm" />
+      <source src="assets/video/intro.mp4" type="video/mp4" />
+    </video>
+    <span class="loader__brand">mir<b>.</b>ai</span>
+    <button type="button" class="loader__skip" tabindex="-1">דלג</button>
     <div class="loader__inner">
       <span class="loader__word">מחברים את המערכות</span>
       <span class="loader__count"><span id="load-n">0</span>%</span>
