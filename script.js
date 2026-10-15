@@ -52,8 +52,7 @@
 
   const loaderEl = document.querySelector(".loader");
   const video = loaderEl.querySelector(".loader__video");
-  let seen = false;
-  try { seen = sessionStorage.getItem("mirai-intro") === "1"; } catch (e) { /* storage blocked */ }
+  const seen = false; // the logo reveal plays on every visit (it is short and skippable)
 
   function counterIntro() {
     loaderEl.classList.remove("loader--video");
@@ -67,12 +66,11 @@
   if (!seen && video && video.canPlayType) {
     loaderEl.classList.add("loader--video");
     // if the video is slow to start, show the logo still (the poster) and move on
-    const fallback = setTimeout(() => { video.pause(); finish(); }, 2600);
+    const fallback = setTimeout(() => { video.pause(); finish(); }, 4000);
     let finished = false;
     const finish = () => {
       if (finished) return;
       finished = true;
-      try { sessionStorage.setItem("mirai-intro", "1"); } catch (e) { /* storage blocked */ }
       gsap.to(".loader__brand", { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" });
       gsap.delayedCall(0.7, startIntro);
     };
