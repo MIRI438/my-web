@@ -71,6 +71,8 @@
       log: [],
       chat: [],
       isYou: !!opts.isYou,
+      done: { card: false, score: false, reply: false, assign: false },
+      just: new Set(),
     };
   }
   const replyText = (l) => `היי ${first(l.name)}, תודה שפנית! קיבלנו את הפנייה בנושא ${l.topic}. אפשר לבחור מועד לשיחה קצרה כאן:`;
@@ -90,6 +92,7 @@
     l.log.push({ t: t + 3200, text: "נשלחה תשובה בוואטסאפ" });
     l.chat.push({ who: "biz", text: replyText(l), link: true, t: t + 3200 });
     l.stage = st;
+    l.done = { card: true, score: true, reply: true, assign: true };
     if (["meeting", "proposal", "won"].includes(st)) {
       l.chat.push({ who: "me", text: "קבעתי לחמישי ב-10:00, תודה!", t: t + 1800e3 });
       l.log.push({ t: t + 1800e3, text: "הלקוח קבע פגישה בעצמו" });
@@ -106,14 +109,18 @@
 
   /* ---------- elements ---------- */
   const inbox = document.getElementById("inbox");
-  const table = document.getElementById("lead-table");
-  const detail = document.getElementById("detail");
+  const list = document.getElementById("lead-list");
+  const card = document.getElementById("lead-card");
   const chatEl = document.getElementById("phone-chat");
   const phoneEl = document.querySelector(".phone");
   const narrText = document.getElementById("narr-text");
   const narrSteps = [...document.querySelectorAll(".narr__steps li")];
   const statsEl = document.getElementById("app-stats");
   const screen = document.getElementById("crm");
+
+  const AV_COLORS = ["#2a3bff", "#0f766e", "#b45309", "#7c3aed", "#be185d", "#0369a1", "#4d7c0f"];
+  const avColor = (l) => AV_COLORS[l.id % AV_COLORS.length];
+  const initials = (n) => n.trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join("");
 
   /* ---------- incoming messages (the buttons) ---------- */
   inbox.innerHTML = Object.entries(SOURCES).map(([k, s]) => `
@@ -155,8 +162,9 @@
     if (window.__lenis) window.__lenis.scrollTo(y, { duration: 0.9 });
     else window.scrollTo({ top: y, behavior: "smooth" });
   }
+  const q = (sel) => card.querySelector(sel);
 
-  /* ---------- the automation run ---------- */
+  /* ---------- the automation run: the card fills itself ---------- */
   function fire(src, opts = {}) {
     if (running) return;
     running = true;
@@ -165,58 +173,61 @@
     const l = makeLead(src, opts);
     l.created = Date.now();
     l.fresh = true;
-    l.scored = false;
     leads.push(l);
     selected = l.id;
     customerOpening(l);
-    l.log.push({ t: Date.now(), text: `פנייה חדשה מ${SOURCES[src].name}` });
     render();
-    narrate(1, `${l.isYou ? "הפנייה שלכם" : "פנייה חדשה"} מ${SOURCES[src].name} נכנסה למערכת. אף אחד לא הקליד כלום.`);
-    focusOn(table.querySelector(`[data-id="${l.id}"]`));
+    narrate(1, `${l.isYou ? "הפנייה שלכם" : "פנייה חדשה"} מ${SOURCES[src].name}! המערכת פותחת לליד כרטיס חדש.`);
+    focusOn(card);
 
+    const step = (fn) => () => { fn(); render(); };
     const steps = [
-      [1400, () => {
-        if (autoOn("score")) l.log.push({ t: Date.now(), text: `AI קרא את הפנייה ונתן ציון ${l.score}` });
-        l.scored = true;
-        render();
-        narrate(2, autoOn("score") ? `AI קרא את הפנייה ונתן ציון ${l.score} מתוך 100.${l.score >= 80 ? " ליד חם." : ""}` : "ציון AI כבוי, אז הפנייה לא דורגה.");
-        focusOn(table.querySelector(`[data-id="${l.id}"] .c-score`));
-      }],
-      [2700, () => {
+      [1100, step(() => {
+        l.done.card = true; l.just.add("card");
+        l.log.push({ t: Date.now(), text: `פנייה חדשה מ${SOURCES[src].name}` });
+        narrate(1, "השם, הטלפון וההודעה של הלקוח נכנסו לכרטיס לבד. אף אחד לא הקליד כלום.");
+        setTimeout(() => focusOn(q(".lc-head")), 30);
+      })],
+      [2600, step(() => {
+        l.done.score = autoOn("score"); l.just.add("score");
+        if (autoOn("score")) l.log.push({ t: Date.now(), text: `AI נתן ציון ${l.score}` });
+        narrate(2, autoOn("score") ? `AI קרא את ההודעה ונתן ציון ${l.score} מתוך 100. ${l.score >= 80 ? "ליד חם, כדאי לטפל בו מהר." : "ליד רגיל."}` : "ציון AI כבוי, אז הליד לא קיבל ציון.");
+        setTimeout(() => focusOn(q(".lc-score")), 30);
+      })],
+      [3900, step(() => {
         if (!autoOn("reply")) return;
-        l.typing = true; render();
+        l.typing = true;
         narrate(3, "המערכת כותבת ללקוח תשובה אישית בוואטסאפ…");
-        focusOn(phoneEl);
-      }],
-      [3600, () => {
+        setTimeout(() => focusOn(phoneEl), 30);
+      })],
+      [4900, step(() => {
         l.typing = false;
         if (autoOn("reply")) {
           l.chat.push({ who: "biz", text: replyText(l), link: true, t: Date.now() });
           l.log.push({ t: Date.now(), text: "נשלחה תשובה בוואטסאפ" });
-          l.stage = "contacted";
-          narrate(3, `${first(l.name)} קיבל/ה תשובה תוך 4 שניות, עם קישור לקביעת פגישה.`);
+          l.done.reply = true; l.just.add("reply");
+          l.stage = "contacted"; l.just.add("stage");
+          narrate(3, `${first(l.name)} קיבל/ה תשובה תוך 5 שניות, עם קישור לקביעת פגישה. השלב בכרטיס התעדכן לבד.`);
         } else {
-          narrate(3, "התשובה האוטומטית כבויה, אז הלקוח עדיין מחכה.");
+          narrate(3, "התשובה האוטומטית כבויה, אז הלקוח עדיין מחכה לתשובה.");
         }
-        render();
-        focusOn(phoneEl);
-      }],
-      [5000, () => {
+        setTimeout(() => focusOn(phoneEl), 30);
+      })],
+      [6400, step(() => {
+        l.done.assign = true; l.just.add("assign");
         const alert = l.score >= 80 && autoOn("alert");
-        if (alert) l.log.push({ t: Date.now(), text: `נשלחה התראה ל${l.agent} עם כל הפרטים` });
-        render();
-        narrate(4, alert ? `${l.agent} מהצוות קיבל/ה התראה בטלפון: ליד חם, כדאי להתקשר היום.` : `הליד שויך ל${l.agent}. אין צורך בהתראה, הציון לא מספיק גבוה.`);
-        focusOn(detail.querySelector(".d-log"));
-      }],
-      [6600, () => {
+        l.log.push({ t: Date.now(), text: alert ? `נשלחה התראה ל${l.agent}` : `שויך ל${l.agent}` });
+        narrate(4, alert ? `הליד שויך ל${l.agent}, שקיבל/ה התראה בטלפון: ליד חם, להתקשר היום.` : `הליד שויך ל${l.agent}, שיטפל/תטפל בו.`);
+        setTimeout(() => focusOn(q(".lc-todo")), 30);
+      })],
+      [8000, step(() => {
         guide = false;
         l.fresh = false;
         running = false;
         inbox.classList.remove("is-busy");
-        render();
-        narrate(5, "זהו. הכול קרה לבד. נסו פנייה אחרת, או שנו את שלב הליד במערכת ותראו מה הלקוח מקבל.");
+        narrate(5, "זהו. כרטיס מלא ולקוח שקיבל תשובה, בלי שאף אחד נגע. עכשיו לחצו על שלב אחר בכרטיס, או נסו פנייה נוספת.");
         focusOn(null);
-      }],
+      })],
     ];
     steps.forEach(([ms, fn]) => setTimeout(fn, T(ms)));
   }
@@ -224,28 +235,29 @@
   /* ---------- stage changes trigger more automations ---------- */
   function setStage(l, st) {
     if (l.stage === st || running) return;
-    l.stage = st;
+    l.stage = st; l.just.add("stage");
     const name = STAGES.find((s) => s.id === st).name;
-    l.log.push({ t: Date.now(), text: `הועבר ל"${name}"` });
     if (st === "meeting") {
       l.chat.push({ who: "me", text: "קבעתי לחמישי ב-10:00, תודה!", t: Date.now() });
       if (autoOn("remind")) {
-        l.log.push({ t: Date.now() + 1, text: "תוזמנה תזכורת ליום לפני" });
-        l.chat.push({ who: "biz", text: "מעולה, נתראה בחמישי ב-10:00. נשלח תזכורת יום לפני.", t: Date.now() + 1 });
+        l.log.push({ t: Date.now(), text: "נשלח אישור פגישה ותוזמנה תזכורת" });
+        l.chat.push({ who: "biz", text: "מעולה, נתראה בחמישי ב-10:00. נשלח לך תזכורת יום לפני.", t: Date.now() + 1 });
+        l.just.add("extra");
       }
-      narrate(5, autoOn("remind") ? "הפגישה נרשמה, והלקוח קיבל אישור. תזכורת תישלח לבד יום לפני." : "הפגישה נרשמה. התזכורת האוטומטית כבויה.");
+      narrate(5, autoOn("remind") ? "הלקוח קבע פגישה. המערכת שלחה לו אישור, ותשלח תזכורת לבד יום לפני." : "הפגישה נרשמה. התזכורת האוטומטית כבויה.");
     } else if (st === "won") {
       if (autoOn("invoice")) {
-        l.log.push({ t: Date.now() + 1, text: "הופקה חשבונית ונשלחה ללקוח" });
+        l.log.push({ t: Date.now(), text: "הופקה חשבונית ונשלחה ללקוח" });
         l.chat.push({ who: "biz", text: "תודה שבחרת בנו! החשבונית מצורפת.", file: "invoice-1044.pdf", t: Date.now() + 1 });
+        l.just.add("extra");
       }
       narrate(5, autoOn("invoice") ? "הליד הפך ללקוח. החשבונית הופקה ונשלחה אליו בוואטסאפ, בלי לפתוח את תוכנת הנהלת החשבונות." : "הליד הפך ללקוח. החשבונית האוטומטית כבויה.");
     } else {
       narrate(5, `הליד הועבר לשלב "${name}".`);
     }
+    render();
     focusOn(phoneEl);
     setTimeout(() => focusOn(null), 1800);
-    render();
   }
 
   /* ---------- views ---------- */
@@ -259,48 +271,92 @@
     render();
   }
 
-  /* ---------- render ---------- */
-  function stageBar(st) {
-    const idx = STAGES.findIndex((s) => s.id === st);
-    return `<span class="sbar" aria-hidden="true">${STAGES.map((_, i) => `<i class="${i <= idx ? "on" : ""}"></i>`).join("")}</span><span class="sname">${STAGES[idx].name}</span>`;
-  }
-
-  function renderTable() {
+  /* ---------- render: list of small lead cards ---------- */
+  function renderList() {
     const rows = [...leads].sort((a, b) => b.created - a.created);
-    table.innerHTML = `
-      <div class="tr th"><span>שם</span><span class="c-src">מקור</span><span class="c-topic">נושא</span><span>ציון</span><span>שלב</span><span class="c-time">מתי</span></div>
-      ${rows.map((l) => `
-      <button type="button" class="tr ${l.id === selected ? "is-sel" : ""} ${l.fresh ? "is-new" : ""}" data-id="${l.id}">
-        <span class="c-name">${esc(l.name)}${l.isYou ? '<em class="you">אתם</em>' : ""}</span>
-        <span class="c-src"><i style="background:${SOURCES[l.src].color}"></i>${SOURCES[l.src].name}</span>
-        <span class="c-topic">${l.topic}</span>
-        <span class="c-score">${l.scored === false ? '<span class="pending">…</span>' : `<b class="${l.score >= 80 ? "hot" : ""}">${l.score}</b><span class="meter"><span style="width:${l.score}%"></span></span>`}</span>
-        <span class="c-stage">${stageBar(l.stage)}</span>
-        <span class="c-time">${ago(l.created)}</span>
-      </button>`).join("")}`;
+    list.innerHTML = `<p class="ll-title">כל הלידים <span>${leads.length}</span></p>` + rows.map((l) => {
+      const st = STAGES.find((s) => s.id === l.stage);
+      return `<button type="button" class="mini ${l.id === selected ? "is-sel" : ""} ${l.fresh ? "is-new" : ""}" data-id="${l.id}">
+        <span class="av" style="--av:${avColor(l)}">${l.done.card ? esc(initials(l.name)) : ""}</span>
+        <span class="mini__body">
+          <b>${l.done.card ? esc(l.name) : '<i class="sk sk--sm"></i>'}${l.isYou ? '<em class="you">אתם</em>' : ""}</b>
+          <small><i style="background:${SOURCES[l.src].color}"></i>${SOURCES[l.src].name} · ${ago(l.created)}</small>
+        </span>
+        <span class="mini__stage st-${l.stage}">${st.name}</span>
+      </button>`;
+    }).join("");
   }
 
-  function renderDetail() {
+  /* ---------- render: the big lead card ---------- */
+  function gauge(score, on) {
+    const len = 125.6; // half circle, r=40
+    const fill = on ? (score / 100) * len : 0;
+    return `<svg viewBox="0 0 100 56" class="gauge" aria-hidden="true">
+      <path d="M10 50 A40 40 0 0 1 90 50" class="gauge__bg"/>
+      <path d="M10 50 A40 40 0 0 1 90 50" class="gauge__fg ${score >= 80 ? "hot" : ""}" style="stroke-dasharray:${fill} ${len};opacity:${on ? 1 : 0}"/>
+    </svg>`;
+  }
+  const fld = (l, key, html, skel = "sk") => (l.done[key] ? `<span class="fill ${l.just.has(key) ? "just" : ""}">${html}</span>` : `<i class="${skel}"></i>`);
+
+  function renderCard() {
     const l = leads.find((x) => x.id === selected);
-    if (!l) { detail.innerHTML = ""; return; }
-    detail.innerHTML = `
-      <div class="d-head">
-        <h4>${esc(l.name)}</h4>
-        <p><span dir="ltr">${l.phone}</span> · ${SOURCES[l.src].name} · ${l.topic}</p>
+    if (!l) { card.innerHTML = ""; return; }
+    const s = SOURCES[l.src];
+    const hot = l.score >= 80;
+    const opening = l.src === "whatsapp" ? s.text : `${s.text.replace(/״/g, "")}`;
+    const todo = [
+      ["card", "פתחה כרטיס ומילאה את כל הפרטים"],
+      ["score", "AI קרא את הפנייה ונתן ציון"],
+      ["reply", "שלחה ללקוח תשובה אישית בוואטסאפ"],
+      ["assign", hot ? `שייכה ל${l.agent} ושלחה התראה` : `שייכה ל${l.agent}`],
+    ];
+    const extras = l.log.filter((e) => /תזכורת|חשבונית|הצעת מחיר|קבע פגישה/.test(e.text));
+    const stIdx = STAGES.findIndex((x) => x.id === l.stage);
+
+    card.innerHTML = `
+      <div class="lc-tag">כרטיס ליד</div>
+      <header class="lc-head">
+        <span class="av av--lg" style="--av:${avColor(l)}">${l.done.card ? esc(initials(l.name)) : ""}</span>
+        <div class="lc-id">
+          <span class="lc-k">שם</span>
+          <h4>${fld(l, "card", esc(l.name), "sk sk--lg")}</h4>
+          <span class="lc-k">טלפון</span>
+          <p dir="ltr" class="lc-phone">${fld(l, "card", l.phone)}</p>
+        </div>
+        <div class="lc-score">
+          ${gauge(l.score, l.done.score)}
+          <b class="${l.just.has("score") ? "pop" : ""}">${l.done.score ? l.score : "?"}</b>
+          <span>${l.done.score ? (hot ? "ליד חם" : "ליד רגיל") : "ציון AI"}</span>
+        </div>
+      </header>
+
+      <div class="lc-grid">
+        <div class="lc-box">
+          <span class="lc-k">איך פנה/תה</span>
+          ${l.done.card ? `<p class="lc-src ${l.just.has("card") ? "just" : ""}"><i style="background:${s.color}"></i>${s.name}</p><blockquote class="${l.just.has("card") ? "just" : ""}">${esc(opening)}</blockquote>` : '<i class="sk"></i><i class="sk sk--wide"></i>'}
+        </div>
+        <div class="lc-box">
+          <span class="lc-k">מי מטפל/ת</span>
+          ${l.done.assign ? `<p class="lc-agent ${l.just.has("assign") ? "just" : ""}"><span class="av av--sm">${l.agent[0]}</span>${l.agent}</p>` : '<p class="lc-wait">עוד לא שויך</p>'}
+          <span class="lc-k">נושא</span>
+          <p>${fld(l, "card", l.topic)}</p>
+        </div>
       </div>
-      <div class="d-block">
-        <span class="d-label">שלב</span>
-        <div class="seg" role="group" aria-label="שינוי שלב">${STAGES.map((s) => `<button type="button" data-stage="${s.id}" class="${s.id === l.stage ? "is-on" : ""}" ${running ? "disabled" : ""}>${s.name}</button>`).join("")}</div>
-        <span class="d-hint">נסו להעביר ל"נקבעה פגישה" או ל"לקוח" ותראו מה הלקוח מקבל בטלפון.</span>
+
+      <div class="lc-stages">
+        <span class="lc-k">שלב · לחצו כדי להעביר</span>
+        <ol>${STAGES.map((x, i) => `<li><button type="button" data-stage="${x.id}" class="${i < stIdx ? "past" : ""} ${i === stIdx ? "now" : ""} ${i === stIdx && l.just.has("stage") ? "just" : ""}" ${running ? "disabled" : ""}><i></i>${x.name}</button></li>`).join("")}</ol>
       </div>
-      <div class="d-block d-log">
-        <span class="d-label">מה המערכת עשתה לבד</span>
-        <ol>${[...l.log].sort((a, b) => a.t - b.t).map((e) => `<li><time>${hms(e.t)}</time><span>${esc(e.text)}</span></li>`).join("")}</ol>
-      </div>
-      <div class="d-meta"><span>אחראי/ת: <b>${l.agent}</b></span><span>ציון: <b>${l.scored === false ? "…" : l.score}</b></span></div>`;
-    detail.querySelectorAll("[data-stage]").forEach((b) => b.addEventListener("click", () => setStage(l, b.dataset.stage)));
-    const ol = detail.querySelector(".d-log ol");
-    ol.scrollTop = ol.scrollHeight;
+
+      <div class="lc-todo">
+        <span class="lc-k">מה המערכת עשתה בשבילכם</span>
+        <ul>
+          ${todo.map(([k, t]) => `<li class="${l.done[k] ? "ok" : "wait"} ${l.just.has(k) ? "just" : ""}"><i></i>${t}${l.done[k] ? "" : "<small>ממתין…</small>"}</li>`).join("")}
+          ${extras.map((e, i) => `<li class="ok ${l.just.has("extra") && i === extras.length - 1 ? "just" : ""}"><i></i>${esc(e.text)}</li>`).join("")}
+        </ul>
+      </div>`;
+    card.querySelectorAll("[data-stage]").forEach((b) => b.addEventListener("click", () => setStage(l, b.dataset.stage)));
+    l.just.clear();
   }
 
   function renderPhone() {
@@ -312,13 +368,13 @@
       return `<div class="b b-${m.who}">${esc(m.text)}${m.link ? '<span class="b-link" dir="ltr">cal.link/meet</span>' : ""}${m.file ? `<span class="b-file" dir="ltr">${esc(m.file)}</span>` : ""}<time>${hm(m.t)}</time></div>`;
     }).join("") + (l.typing ? '<div class="b b-biz b-typing"><i></i><i></i><i></i></div>' : "");
     chatEl.scrollTop = chatEl.scrollHeight;
-    document.getElementById("phone-who").textContent = `הטלפון של ${l.name}`;
+    document.getElementById("phone-who").textContent = `הטלפון של ${l.done.card ? l.name : "הלקוח"}`;
   }
 
   function renderStats() {
     const today = leads.filter((l) => Date.now() - l.created < 86400e3).length;
     const won = leads.filter((l) => l.stage === "won").length;
-    statsEl.innerHTML = `<span><b>${today}</b> לידים היום</span><span><b>4 שנ׳</b> זמן תגובה</span><span><b>${won}</b> לקוחות חדשים</span>`;
+    statsEl.innerHTML = `<span><b>${today}</b> לידים היום</span><span><b>5 שנ׳</b> זמן תגובה</span><span><b>${won}</b> לקוחות חדשים</span>`;
   }
 
   function renderAuto() {
@@ -351,16 +407,17 @@
 
   function render() {
     renderStats();
-    if (view === "leads") { renderTable(); renderDetail(); }
+    if (view === "leads") { renderList(); renderCard(); }
     else renderAuto();
     renderPhone();
   }
 
-  table.addEventListener("click", (e) => {
-    const r = e.target.closest(".tr[data-id]");
+  list.addEventListener("click", (e) => {
+    const r = e.target.closest(".mini[data-id]");
     if (!r || running) return;
     selected = Number(r.dataset.id);
     render();
+    if (window.innerWidth < 900) focusOn(null);
   });
 
   /* ---------- full screen ---------- */
@@ -376,7 +433,7 @@
   }
 
   render();
-  narrate(0, "בחרו למעלה איך הלקוח פונה, ותראו מה קורה בשני הצדדים.");
+  narrate(0, "בחרו למעלה איך הלקוח פונה, ותראו את כרטיס הליד ממלא את עצמו.");
 
   // run one example automatically the first time the demo is on screen
   let played = false;
@@ -385,5 +442,5 @@
     played = true; obs.disconnect();
     setTimeout(() => { guide = false; fire("whatsapp"); }, 900);
   }, { threshold: 0.35 }).observe(stageEl);
-  setInterval(() => { if (!running && view === "leads") renderTable(); }, 30000);
+  setInterval(() => { if (!running && view === "leads") renderList(); }, 30000);
 })();

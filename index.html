@@ -155,7 +155,7 @@
       <div class="demo__head">
         <p class="eyebrow">הדגמה חיה</p>
         <h2>ככה זה ייראה אצלכם.</h2>
-        <p>מימין, מערכת הלידים של העסק. משמאל, הטלפון של הלקוח. בחרו איך הלקוח פונה, ותראו מה קורה בשני הצדדים, בלי שאף אחד מהצוות נוגע בכלום.</p>
+        <p>לכל לקוח שפונה נפתח כרטיס ליד, והמערכת ממלאת אותו לבד. מימין מערכת הלידים של העסק, משמאל הטלפון של הלקוח. בחרו איך הלקוח פונה ותראו מה קורה.</p>
       </div>
 
       <div class="inbox">
@@ -169,7 +169,7 @@
 
       <div class="theater" id="demo-stage">
         <div class="narr" aria-live="polite">
-          <ol class="narr__steps" aria-hidden="true"><li>נכנס</li><li>ציון</li><li>תשובה</li><li>שיוך</li><li>סיום</li></ol>
+          <ol class="narr__steps" aria-hidden="true"><li>כרטיס</li><li>ציון</li><li>תשובה</li><li>שיוך</li><li>סיום</li></ol>
           <p class="narr__text" id="narr-text"></p>
         </div>
 
@@ -191,8 +191,8 @@
               </header>
               <div class="app__body">
                 <div class="view-leads" id="view-leads">
-                  <div class="ltable" id="lead-table"></div>
-                  <aside class="detail" id="detail" aria-label="פרטי הליד"></aside>
+                  <div class="llist" id="lead-list" aria-label="כל הלידים"></div>
+                  <div class="lc-wrap"><article class="lc" id="lead-card" aria-live="polite"></article></div>
                 </div>
                 <div class="view-auto" id="view-auto" hidden></div>
               </div>
