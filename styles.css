@@ -199,20 +199,51 @@ html.anim .manifesto__text .w { opacity: 0.12; }
 .flow__time small { font: 500 1rem var(--body); color: var(--muted); }
 .flow__vs { color: var(--muted); }
 .flow__vs s { text-decoration-thickness: 2px; text-decoration-color: var(--cobalt); }
-.flow__wrap { position: relative; }
+.flow__wrap { position: relative; padding-top: 120px; }
 .flow__track { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; position: relative; }
-.flow__track li { display: grid; gap: 6px; align-content: start; transition: opacity 0.4s; }
-.flow__track b { font-size: 1.15rem; margin-top: 16px; }
-.flow__track em { font-style: normal; color: var(--muted); font-size: 0.95rem; }
+.flow__track > li { position: relative; display: grid; gap: 6px; align-content: start; justify-items: start; transition: opacity 0.4s; }
+.flow__track > li > b { font-size: 1.15rem; margin-top: 18px; }
+.flow__track > li > em { font-style: normal; color: var(--muted); font-size: 0.95rem; }
 .node {
-  width: 28px; height: 28px; border-radius: 50%;
-  border: 2px solid var(--ink); background: var(--paper); position: relative; z-index: 1;
-  transition: background 0.4s, border-color 0.4s, transform 0.5s var(--ease), box-shadow 0.5s;
+  width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center;
+  border: 2px solid var(--ink); background: var(--paper); color: var(--ink); position: relative; z-index: 1;
+  transition: background 0.4s, border-color 0.4s, color 0.4s, transform 0.5s var(--ease), box-shadow 0.5s;
 }
-.flow__track li.on .node { background: var(--cobalt); border-color: var(--cobalt); transform: scale(1.25); box-shadow: 0 0 0 10px rgba(42, 59, 255, 0.15); }
-html.anim .flow__track li { opacity: 0.35; }
-html.anim .flow__track li.on { opacity: 1; }
-.flow__line { position: absolute; top: 13px; right: 14px; left: 14px; height: 2px; background: var(--line); }
+.node svg { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+/* small picture of what happens at each step; pops up when the line reaches it */
+.peek {
+  position: absolute; bottom: calc(100% + 16px); inset-inline-start: 0; z-index: 2;
+  min-width: 150px; padding: 10px 12px; border-radius: 12px;
+  background: var(--white); color: var(--ink); font-size: 0.82rem; line-height: 1.35;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 14px 30px -12px rgba(12, 13, 16, 0.3);
+  opacity: 0; transform: translateY(10px) scale(0.92); transform-origin: bottom right;
+  transition: opacity 0.4s, transform 0.5s var(--ease);
+}
+.peek::after { content: ""; position: absolute; top: 100%; inset-inline-start: 24px; border: 7px solid transparent; border-top-color: var(--white); }
+.flow__track > li.on .peek { opacity: 1; transform: none; }
+html:not(.anim) .peek { opacity: 1; transform: none; }
+.peek--form { display: grid; gap: 5px; }
+.peek--form i { font-style: normal; padding: 4px 8px; border-radius: 5px; background: #f1f2f4; border: 1px solid #e3e4e8; }
+.peek--form u { text-decoration: none; text-align: center; padding: 5px; border-radius: 5px; background: var(--cobalt); color: #fff; font-weight: 700; }
+.peek--score { display: flex; align-items: center; gap: 10px; }
+.peek--score b { font: 700 2.2rem/1 var(--display); color: #ea580c; }
+.peek--score span { font-weight: 700; padding: 3px 8px; border-radius: 999px; background: #ffedd5; color: #c2410c; }
+.peek--card { display: flex; align-items: center; gap: 10px; }
+.peek--card > i { font-style: normal; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--cobalt); color: #fff; font-weight: 700; }
+.peek--card span { display: grid; }
+.peek--card small { color: var(--muted); }
+.peek--wa { background: #d9fdd3; max-width: 190px; }
+.peek--wa::after { border-top-color: #d9fdd3; }
+.peek--wa small { display: block; text-align: left; color: #53bdeb; font-size: 0.7rem; }
+.peek--cal { display: grid; justify-items: center; min-width: 110px; padding: 0 0 8px; overflow: hidden; }
+.peek--cal small { align-self: stretch; text-align: center; padding: 3px; background: #dc2626; color: #fff; font-weight: 700; border-radius: 12px 12px 0 0; }
+.peek--cal b { font: 700 2rem/1.1 var(--display); margin-top: 4px; }
+.peek--cal span { color: var(--muted); font-size: 0.75rem; }
+.flow__track > li.on .node { background: var(--cobalt); border-color: var(--cobalt); color: var(--white); transform: scale(1.08); box-shadow: 0 0 0 10px rgba(42, 59, 255, 0.15); }
+html.anim .flow__track > li { opacity: 0.4; }
+html.anim .flow__track > li.on { opacity: 1; }
+.flow__line { position: absolute; top: calc(120px + 31px); right: 32px; left: 32px; height: 2px; background: var(--line); }
 .flow__line span { position: absolute; inset: 0; background: var(--cobalt); transform-origin: right; transform: scaleX(var(--p, 1)); }
 html.anim .flow__line span { transform: scaleX(var(--p, 0)); }
 
@@ -322,11 +353,14 @@ html.anim .contact__title .line > span { transform: translateY(105%); }
   .panel { flex: none; height: auto; min-height: 420px; }
 
   .flow__pin { gap: 40px; padding-block: 96px; }
-  .flow__track { grid-template-columns: 1fr; gap: 28px; padding-inline-start: 52px; }
-  .flow__track li { position: relative; }
-  .flow__track .node { position: absolute; inset-inline-start: -52px; top: 0; }
-  .flow__track b { margin-top: 0; }
-  .flow__line { top: 14px; bottom: 14px; right: 13px; left: auto; width: 2px; height: auto; }
+  .flow__wrap { padding-top: 0; }
+  .flow__track { grid-template-columns: 1fr; gap: 26px; padding-inline-start: 66px; }
+  .flow__track .node { position: absolute; inset-inline-start: -66px; top: 0; width: 50px; height: 50px; }
+  .node svg { width: 22px; height: 22px; }
+  .flow__track > li > b { margin-top: 0; }
+  .peek { position: static; order: 3; margin-top: 6px; transform: translateY(6px); }
+  .peek::after { display: none; }
+  .flow__line { top: 25px; bottom: 25px; right: 24px; left: auto; width: 2px; height: auto; }
   .flow__line span { transform-origin: top; transform: scaleY(var(--p, 1)); }
   html.anim .flow__line span { transform: scaleY(var(--p, 0)); }
 
