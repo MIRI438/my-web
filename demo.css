@@ -171,7 +171,7 @@
 @keyframes scrOut { to { opacity: 0; transform: translateX(-30%); } }
 .ps { height: 100%; display: flex; flex-direction: column; }
 .ps-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 26px 14px 10px; }
-.field { display: block; margin-top: 3px; padding: 7px 9px; min-height: 2.1em; border: 1px solid #ccd0d5; border-radius: 6px; background: #f5f6f7; color: #111; font-size: 0.86rem; }
+.ps-field { display: block; margin-top: 3px; padding: 7px 9px; min-height: 2.1em; border: 1px solid #ccd0d5; border-radius: 6px; background: #f5f6f7; color: #111; font-size: 0.86rem; }
 .typed { display: inline-block; white-space: nowrap; animation: type var(--t, 0.9s) steps(16) var(--d, 0s) both; }
 .typed.ltr { animation-name: typeL; }
 @keyframes type { from { clip-path: inset(0 0 0 100%); } to { clip-path: inset(0 0 0 0); } }
@@ -203,7 +203,7 @@
 .mail-send { padding: 5px 12px; border-radius: 999px; background: #0b57d0; color: #fff; font-weight: 700; font-size: 0.75rem; }
 .mail-row { display: flex; align-items: center; gap: 8px; padding: 9px 14px; border-bottom: 1px solid #f0f0f0; }
 .mail-row small { color: #6b7280; width: 30px; }
-.mail-row .field, .mail-body .field { border: 0; background: none; padding: 0; margin: 0; min-height: 0; }
+.mail-row .ps-field, .mail-body .ps-field { border: 0; background: none; padding: 0; margin: 0; min-height: 0; }
 .mail-body { padding: 12px 14px; line-height: 1.6; }
 .mail-body .typed { white-space: normal; animation: appear 0.9s var(--ease) var(--d) both; }
 .sent--toast { margin: auto 14px 18px; padding: 9px; border-radius: 8px; background: #111827; color: #fff; }

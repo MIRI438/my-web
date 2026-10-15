@@ -224,7 +224,7 @@
   /* the channel's own screen on the customer's phone */
   function sourceScene(l) {
     const n = esc(l.name), ph = l.phone, f = esc(first(l.name));
-    const typed = (txt, delay, dur = 0.9, ltr = false) => `<span class="field"><span class="typed${ltr ? " ltr" : ""}" style="--d:${delay}s;--t:${dur}s"${ltr ? ' dir="ltr"' : ""}>${txt}</span></span>`;
+    const typed = (txt, delay, dur = 0.9, ltr = false) => `<span class="ps-field"><span class="typed${ltr ? " ltr" : ""}" style="--d:${delay}s;--t:${dur}s"${ltr ? ' dir="ltr"' : ""}>${txt}</span></span>`;
     switch (l.src) {
       case "facebook": return `
         <div class="ps ps-fb">

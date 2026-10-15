@@ -328,26 +328,33 @@ html.anim .flow__line span { transform: scaleX(var(--p, 0)); }
 @media (prefers-reduced-motion: reduce) { .contact__video { display: none; } }
 .contact__title { font: 700 clamp(4rem, 12vw, 12rem)/0.84 var(--display); }
 .contact__grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 64px; margin-top: 10vh; align-items: start; }
-.form { display: grid; grid-template-columns: 1fr 1fr; gap: 28px 32px; align-items: end; position: relative; }
-.field { display: grid; gap: 4px; font-size: 0.85rem; color: var(--on-cobalt-dim); }
+/* contact form: a frosted panel over the brand video */
+.form {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 20px 22px; align-items: end; position: relative;
+  padding: clamp(22px, 3vw, 40px); border-radius: 28px;
+  background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.24);
+  backdrop-filter: blur(18px) saturate(1.2); -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  box-shadow: 0 30px 60px -30px rgba(10, 16, 80, 0.6);
+}
+.field { display: grid; gap: 8px; font-size: 0.88rem; font-weight: 500; color: rgba(255, 255, 255, 0.85); }
 .field--wide { grid-column: 1 / -1; }
 .field input {
-  width: 100%; padding: 10px 0; background: transparent; color: var(--white);
-  border: 0; border-bottom: 1.5px solid rgba(255, 255, 255, 0.4);
-  font: 400 1.35rem/1.4 var(--body); transition: border-color 0.3s;
+  width: 100%; padding: 14px 16px; border-radius: 14px;
+  background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.22); color: var(--white);
+  font: 400 1.05rem/1.4 var(--body); transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
 }
-.field input::placeholder { color: rgba(255, 255, 255, 0.4); font-size: 1rem; }
-.field input:focus { outline: none; border-color: var(--white); }
-.field.is-invalid input { border-color: #ffb4a8; }
+.field input::placeholder { color: rgba(255, 255, 255, 0.55); font-size: 0.95rem; }
+.field input:hover { background: rgba(255, 255, 255, 0.16); }
+.field input:focus { outline: none; background: rgba(255, 255, 255, 0.2); border-color: var(--white); box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.16); }
+.field.is-invalid input { border-color: #ffb4a8; box-shadow: 0 0 0 4px rgba(255, 180, 168, 0.2); }
 .orb {
-  grid-column: 1 / -1; justify-self: start;
-  width: 168px; height: 168px; border-radius: 50%;
+  grid-column: 1 / -1; height: 60px; border-radius: 999px;
   border: 0; background: var(--white); color: var(--cobalt);
-  font: 700 2.4rem/1 var(--display); cursor: pointer;
-  transition: transform 0.5s var(--ease), background 0.3s, color 0.3s;
+  font: 700 1.9rem/1 var(--display); cursor: pointer;
+  transition: transform 0.4s var(--ease), background 0.25s, color 0.25s, box-shadow 0.25s;
 }
-.orb:hover { background: var(--ink); color: var(--white); }
-.form__status { grid-column: 1 / -1; min-height: 1.6em; font-weight: 500; }
+.orb:hover { background: var(--ink); color: var(--white); box-shadow: 0 16px 30px -12px rgba(0, 0, 0, 0.5); }
+.form__status { grid-column: 1 / -1; min-height: 1.4em; font-weight: 500; text-align: center; margin-top: -6px; }
 .form__status.is-error { color: #ffd2ca; }
 .contact__list { margin: 0; display: grid; gap: 22px; }
 .contact__list dt { font-size: 0.85rem; color: var(--on-cobalt-dim); }
@@ -398,7 +405,6 @@ html.anim .contact__title .line > span { transform: translateY(105%); }
   .contact { border-radius: 28px 28px 0 0; padding-top: 12vh; }
   .contact__grid { grid-template-columns: 1fr; gap: 56px; }
   .form { grid-template-columns: 1fr; }
-  .orb { width: 132px; height: 132px; font-size: 2rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

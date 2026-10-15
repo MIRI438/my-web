@@ -200,7 +200,7 @@
     const orb = document.querySelector(".orb");
     orb.addEventListener("pointermove", (e) => {
       const r = orb.getBoundingClientRect();
-      gsap.to(orb, { x: (e.clientX - r.left - r.width / 2) * 0.35, y: (e.clientY - r.top - r.height / 2) * 0.35, duration: 0.6, ease: "power3.out" });
+      gsap.to(orb, { x: (e.clientX - r.left - r.width / 2) * 0.06, y: (e.clientY - r.top - r.height / 2) * 0.25, duration: 0.6, ease: "power3.out" });
     });
     orb.addEventListener("pointerleave", () => gsap.to(orb, { x: 0, y: 0, duration: 0.8, ease: "elastic.out(1, 0.4)" }));
   }
