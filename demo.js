@@ -46,6 +46,8 @@
   const phoneCap = stageEl.querySelector(".fx-col--phone .fx-cap");
   let lead = null;
   let running = false;
+  let timers = [];
+  const later = (fn, ms) => timers.push(setTimeout(fn, ms));
   let lastName = "";
   let guide = false;
 
@@ -81,11 +83,12 @@
 
   /* ---------- run ---------- */
   function fire(src, opts = {}) {
-    if (running) return;
+    // picking another channel mid-run cancels the current run and starts over
+    timers.forEach(clearTimeout);
+    timers = [];
     running = true;
     stageEl.classList.remove("is-done");
     inbox.querySelectorAll(".src").forEach((b) => b.classList.toggle("is-on", b.dataset.src === src));
-    inbox.classList.add("is-busy");
     let name = opts.name;
     if (!name) { do { name = rnd(PEOPLE); } while (name === lastName); }
     lastName = name;
@@ -100,7 +103,7 @@
     lead.screen = src === "whatsapp" ? "chat" : "source";
     if (src === "whatsapp") {
       lead.meTyping = true;
-      setTimeout(() => { lead.meTyping = false; lead.chat.push({ who: "me", text: SOURCES[src].msg, t: Date.now() }); renderPhone(); }, T(900));
+      later(() => { lead.meTyping = false; lead.chat.push({ who: "me", text: SOURCES[src].msg, t: Date.now() }); renderPhone(); }, T(900));
     } else {
       lead.chat.push({ who: "note", text: src === "phone" ? "שיחה שלא נענתה" : `פנייה דרך ${SOURCES[src].name}`, t: Date.now() });
     }
@@ -112,9 +115,9 @@
     render();
     show(stageEl.querySelector(".fx-col--phone"));
 
-    const step = (k, ms, fn) => setTimeout(() => {
+    const step = (k, ms, fn) => later(() => {
       lane.forEach((li) => li.classList.toggle("now", li.dataset.k === k));
-      setTimeout(() => {
+      later(() => {
         fn();
         lead.done[k] = true; lead.just.add(k);
         const li = lane.find((x) => x.dataset.k === k);
@@ -130,12 +133,12 @@
       lead.stage = 1; lead.just.add("stage");
       show(stageEl.querySelector(".phone"));
     });
-    setTimeout(() => { lead.screen = "chat"; lead.typing = true; renderPhone(); show(stageEl.querySelector(".phone")); }, T(D + 2800));
-    setTimeout(() => { lead.typing = false; }, T(D + 3440));
+    later(() => { lead.screen = "chat"; lead.typing = true; renderPhone(); show(stageEl.querySelector(".phone")); }, T(D + 2800));
+    later(() => { lead.typing = false; }, T(D + 3440));
     step("assign", D + 4200, () => show(card));
     // the four steps are done; the card then keeps moving on its own
     const tail = D + 5400;
-    setTimeout(() => {
+    later(() => {
       stageEl.classList.remove("is-running");
       result.classList.add("on");
       phoneCap.textContent = "הלקוח";
@@ -157,10 +160,9 @@
         lead.chat.push({ who: "biz", text: "תודה שבחרת בנו! החשבונית מצורפת.", file: "invoice.pdf", t: now() });
       }],
     ];
-    follow.forEach(([ms, fn]) => setTimeout(() => { fn(); render(); ping(); }, T(tail + ms)));
-    setTimeout(() => {
+    follow.forEach(([ms, fn]) => later(() => { fn(); render(); ping(); }, T(tail + ms)));
+    later(() => {
       running = false;
-      inbox.classList.remove("is-busy");
       stageEl.classList.add("is-done");
       guide = false;
       render();
