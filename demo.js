@@ -42,6 +42,8 @@
   const chatEl = document.getElementById("phone-chat");
   const lane = [...document.querySelectorAll("#lane li")];
   const result = document.getElementById("lane-result");
+  const srcScreen = document.getElementById("phone-src");
+  const phoneCap = stageEl.querySelector(".fx-col--phone .fx-cap");
   let lead = null;
   let running = false;
   let lastName = "";
@@ -93,7 +95,16 @@
       phone: phoneNo(), agent: rnd(AGENTS), color: rnd(AV),
       stage: 0, done: {}, just: new Set(), chat: [], typing: false,
     };
-    lead.chat.push(src === "whatsapp" ? { who: "me", text: SOURCES[src].msg, t: Date.now() } : { who: "note", text: `פנייה דרך ${SOURCES[src].name}`, t: Date.now() });
+    // every channel first plays its own little scene on the customer's phone
+    const D = src === "whatsapp" ? 1300 : 3100;
+    lead.screen = src === "whatsapp" ? "chat" : "source";
+    if (src === "whatsapp") {
+      lead.meTyping = true;
+      setTimeout(() => { lead.meTyping = false; lead.chat.push({ who: "me", text: SOURCES[src].msg, t: Date.now() }); renderPhone(); }, T(900));
+    } else {
+      lead.chat.push({ who: "note", text: src === "phone" ? "שיחה שלא נענתה" : `פנייה דרך ${SOURCES[src].name}`, t: Date.now() });
+    }
+    phoneCap.textContent = `הלקוח פונה ב${SOURCES[src].name}`;
     lane.forEach((li) => li.className = "");
     result.classList.remove("on");
     stageEl.classList.add("is-running");
@@ -112,16 +123,16 @@
       }, T(650));
     }, T(ms));
 
-    step("card", 700, () => show(card));
-    step("score", 2100, () => {});
-    step("reply", 3500, () => {
+    step("card", D, () => show(card));
+    step("score", D + 1400, () => {});
+    step("reply", D + 2800, () => {
       lead.chat.push({ who: "biz", text: `היי ${first(lead.name)}, תודה שפנית! אפשר לקבוע שיחה קצרה כאן:`, link: true, t: Date.now() });
       lead.stage = 1; lead.just.add("stage");
       show(stageEl.querySelector(".phone"));
     });
-    setTimeout(() => { lead.typing = true; renderPhone(); }, T(3500));
-    setTimeout(() => { lead.typing = false; }, T(4140));
-    step("assign", 4900, () => show(card));
+    setTimeout(() => { lead.screen = "chat"; lead.typing = true; renderPhone(); show(stageEl.querySelector(".phone")); }, T(D + 2800));
+    setTimeout(() => { lead.typing = false; }, T(D + 3440));
+    step("assign", D + 4200, () => show(card));
     setTimeout(() => {
       running = false;
       inbox.classList.remove("is-busy");
@@ -129,8 +140,9 @@
       stageEl.classList.add("is-done");
       result.classList.add("on");
       guide = false;
+      phoneCap.textContent = "הלקוח";
       render();
-    }, T(6100));
+    }, T(D + 5400));
   }
 
   /* ---------- stage clicks: more automations ---------- */
@@ -191,8 +203,80 @@
     l.just.clear();
   }
 
+  /* the channel's own screen on the customer's phone */
+  function sourceScene(l) {
+    const n = esc(l.name), ph = l.phone, f = esc(first(l.name));
+    const typed = (txt, delay, dur = 0.9, ltr = false) => `<span class="field"><span class="typed${ltr ? " ltr" : ""}" style="--d:${delay}s;--t:${dur}s"${ltr ? ' dir="ltr"' : ""}>${txt}</span></span>`;
+    switch (l.src) {
+      case "facebook": return `
+        <div class="ps ps-fb">
+          <div class="ps-bar fb"><b>facebook</b></div>
+          <div class="fb-post"><span class="fb-pg"><i></i><span><b>העסק שלכם</b><small>ממומן</small></span></span><div class="fb-img"><b>20% הנחה</b><span>מבצע סתיו</span></div></div>
+          <div class="fb-form">
+            <p>השאירו פרטים ונחזור אליכם</p>
+            <label>שם מלא${typed(n, 0.5)}</label>
+            <label>טלפון${typed(ph, 1.4, 0.8, true)}</label>
+            <span class="tap fb-btn" style="--d:2.3s">שליחה</span>
+            <span class="sent" style="--d:2.6s">✓ הפרטים נשלחו</span>
+          </div>
+        </div>`;
+      case "email": return `
+        <div class="ps ps-mail">
+          <div class="ps-bar mail"><b>הודעה חדשה</b><span class="tap mail-send" style="--d:2.3s">שליחה</span></div>
+          <div class="mail-row"><small>אל</small><span dir="ltr">hello@your-business.co.il</span></div>
+          <div class="mail-row"><small>נושא</small>${typed("בקשה להצעת מחיר", 0.3, 0.6)}</div>
+          <div class="mail-body">${typed(`שלום, אשמח לקבל הצעת מחיר לחבילה החודשית. תודה, ${f}`, 1, 1.2)}</div>
+          <span class="sent sent--toast" style="--d:2.6s">✓ ההודעה נשלחה</span>
+        </div>`;
+      case "instagram": return `
+        <div class="ps ps-ig">
+          <div class="ps-bar ig"><i></i><b>your.business</b></div>
+          <div class="ig-story"><span>סטורי</span><b>יש מקום השבוע!</b></div>
+          <div class="ig-chat">
+            <div class="ig-typing" style="--d:0.4s"><i></i><i></i><i></i></div>
+            <div class="ig-msg" style="--d:1.6s">ראיתי את הסטורי, יש מקום השבוע?</div>
+            <small class="ig-seen" style="--d:2.4s">נשלח</small>
+          </div>
+        </div>`;
+      case "site": return `
+        <div class="ps ps-web">
+          <div class="ps-bar web"><span dir="ltr">your-business.co.il</span></div>
+          <div class="web-hero"><b>העסק שלכם</b><span>נשמח לעזור</span></div>
+          <div class="web-form">
+            <label>שם${typed(n, 0.4)}</label>
+            <label>טלפון${typed(ph, 1.2, 0.8, true)}</label>
+            <label>במה נוכל לעזור?${typed("שיחת ייעוץ", 1.9, 0.5)}</label>
+            <span class="tap web-btn" style="--d:2.4s">שליחה</span>
+            <span class="sent" style="--d:2.7s">✓ תודה! נחזור אליכם</span>
+          </div>
+        </div>`;
+      case "phone": return `
+        <div class="ps ps-call">
+          <small>מתקשר/ת…</small>
+          <b>העסק שלכם</b>
+          <span class="call-ring"><i></i><i></i><i></i></span>
+          <span class="call-miss" style="--d:2.1s">אין מענה · השיחה לא נענתה</span>
+          <span class="call-btn" aria-hidden="true"></span>
+        </div>`;
+    }
+    return "";
+  }
+
+  let srcKey = "";
   function renderPhone() {
     const st = document.getElementById("phone-status");
+    const key = lead && lead.screen === "source" ? `src-${lead.name}-${lead.src}` : "";
+    if (key !== srcKey) {
+      if (key) {
+        srcScreen.innerHTML = sourceScene(lead);
+        srcScreen.hidden = false;
+        srcScreen.classList.remove("out");
+      } else if (srcKey) {
+        srcScreen.classList.add("out");
+        setTimeout(() => { if (!srcKey) srcScreen.hidden = true; }, 450);
+      }
+      srcKey = key;
+    }
     if (!lead) {
       st.textContent = "מקוון";
       chatEl.innerHTML = '<p class="b-note">כאן תופיע התשובה שהלקוח מקבל</p>';
@@ -202,7 +286,7 @@
     chatEl.innerHTML = lead.chat.map((m) => {
       if (m.who === "note") return `<p class="b-note">${esc(m.text)}</p>`;
       return `<div class="b b-${m.who}">${esc(m.text)}${m.link ? '<span class="b-link" dir="ltr">cal.link/meet</span>' : ""}${m.file ? `<span class="b-file" dir="ltr">${esc(m.file)}</span>` : ""}<time>${hm(m.t)}</time></div>`;
-    }).join("") + (lead.typing ? '<div class="b b-biz b-typing"><i></i><i></i><i></i></div>' : "");
+    }).join("") + (lead.typing ? '<div class="b b-biz b-typing"><i></i><i></i><i></i></div>' : "") + (lead.meTyping ? '<div class="b b-me b-typing"><i></i><i></i><i></i></div>' : "");
     chatEl.scrollTop = chatEl.scrollHeight;
   }
 

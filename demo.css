@@ -167,6 +167,86 @@
 .b-typing i { width: 6px; height: 6px; border-radius: 50%; background: #8696a0; animation: blink 1.1s infinite; }
 .b-typing i:nth-child(2) { animation-delay: 0.15s; } .b-typing i:nth-child(3) { animation-delay: 0.3s; }
 
+/* ---------- each channel's own scene on the customer's phone ---------- */
+.phone { position: relative; }
+.phone__src {
+  position: absolute; inset: 9px; z-index: 2; overflow: hidden; border-radius: 31px;
+  background: #fff; color: #111; font-family: var(--body); font-size: 0.82rem;
+  animation: scrIn 0.45s var(--ease);
+}
+.phone__src.out { animation: scrOut 0.45s var(--ease) forwards; }
+@keyframes scrIn { from { opacity: 0; transform: translateY(16px); } }
+@keyframes scrOut { to { opacity: 0; transform: translateX(-30%); } }
+.ps { height: 100%; display: flex; flex-direction: column; }
+.ps-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 26px 14px 10px; }
+.field { display: block; margin-top: 3px; padding: 7px 9px; min-height: 2.1em; border: 1px solid #ccd0d5; border-radius: 6px; background: #f5f6f7; color: #111; font-size: 0.86rem; }
+.typed { display: inline-block; white-space: nowrap; animation: type var(--t, 0.9s) steps(16) var(--d, 0s) both; }
+.typed.ltr { animation-name: typeL; }
+@keyframes type { from { clip-path: inset(0 0 0 100%); } to { clip-path: inset(0 0 0 0); } }
+@keyframes typeL { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+.tap { animation: tap 0.35s ease var(--d, 0s) both; }
+@keyframes tap { 0%, 100% { transform: none; } 50% { transform: scale(0.9); filter: brightness(0.85); } }
+.sent { opacity: 0; color: #15803d; font-weight: 700; text-align: center; animation: appear 0.4s var(--ease) var(--d, 0s) forwards; }
+@keyframes appear { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* facebook lead ad */
+.ps-bar.fb { background: #1877f2; color: #fff; }
+.ps-bar.fb b { font: 800 1.15rem/1 Arial, Helvetica, sans-serif; letter-spacing: -0.03em; direction: ltr; }
+.fb-post { padding: 10px 12px 0; }
+.fb-pg { display: flex; align-items: center; gap: 8px; }
+.fb-pg i { width: 26px; height: 26px; border-radius: 50%; background: var(--cobalt); }
+.fb-pg span { display: grid; line-height: 1.15; }
+.fb-pg small { color: #65676b; font-size: 0.68rem; }
+.fb-img { margin-top: 8px; height: 74px; border-radius: 8px; background: linear-gradient(135deg, var(--cobalt), #0b1a8f); color: #fff; display: grid; place-content: center; text-align: center; line-height: 1.1; }
+.fb-img b { font: 700 1.6rem/1 var(--display); }
+.fb-img span { font-size: 0.7rem; opacity: 0.85; }
+.fb-form { padding: 10px 12px; display: grid; gap: 8px; }
+.fb-form p { font-weight: 700; }
+.fb-form label, .web-form label { display: grid; font-size: 0.7rem; color: #65676b; }
+.fb-btn, .web-btn { display: grid; place-items: center; padding: 9px; border-radius: 7px; background: #1877f2; color: #fff; font-weight: 700; }
+
+/* email compose */
+.ps-mail { background: #fff; }
+.ps-bar.mail { border-bottom: 1px solid #e5e7eb; }
+.mail-send { padding: 5px 12px; border-radius: 999px; background: #0b57d0; color: #fff; font-weight: 700; font-size: 0.75rem; }
+.mail-row { display: flex; align-items: center; gap: 8px; padding: 9px 14px; border-bottom: 1px solid #f0f0f0; }
+.mail-row small { color: #6b7280; width: 30px; }
+.mail-row .field, .mail-body .field { border: 0; background: none; padding: 0; margin: 0; min-height: 0; }
+.mail-body { padding: 12px 14px; line-height: 1.6; }
+.mail-body .typed { white-space: normal; animation: appear 0.9s var(--ease) var(--d) both; }
+.sent--toast { margin: auto 14px 18px; padding: 9px; border-radius: 8px; background: #111827; color: #fff; }
+
+/* instagram direct */
+.ps-bar.ig { justify-content: flex-start; border-bottom: 1px solid #efefef; }
+.ps-bar.ig i { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(45deg, #f9ce34, #ee2a7b, #6228d7); box-shadow: inset 0 0 0 2px #fff; }
+.ig-story { margin: 12px auto 0; width: 110px; height: 150px; border-radius: 12px; background: linear-gradient(160deg, #ee2a7b, #6228d7); color: #fff; display: grid; align-content: space-between; padding: 8px; font-size: 0.72rem; }
+.ig-story b { font: 700 1.25rem/1 var(--display); }
+.ig-chat { position: relative; margin-top: auto; padding: 14px 12px 22px; display: grid; justify-items: start; gap: 4px; min-height: 90px; }
+.ig-typing { position: absolute; bottom: 30px; inset-inline-start: 12px; display: flex; gap: 4px; padding: 10px 12px; border-radius: 18px; background: #efefef; opacity: 0; animation: igType 1.2s linear var(--d) both; }
+.ig-typing i { width: 6px; height: 6px; border-radius: 50%; background: #8e8e8e; }
+@keyframes igType { 0% { opacity: 0; } 10%, 90% { opacity: 1; } 100% { opacity: 0; } }
+.ig-msg { max-width: 85%; padding: 9px 13px; border-radius: 18px; background: linear-gradient(135deg, #7b2ff7, #f107a3); color: #fff; opacity: 0; animation: appear 0.4s var(--ease) var(--d) forwards; }
+.ig-seen { color: #8e8e8e; font-size: 0.68rem; opacity: 0; animation: appear 0.3s var(--d) forwards; }
+
+/* website form */
+.ps-bar.web { justify-content: center; background: #f1f3f4; }
+.ps-bar.web span { padding: 4px 12px; border-radius: 999px; background: #fff; font-size: 0.7rem; color: #5f6368; }
+.web-hero { padding: 14px; background: var(--ink); color: #fff; display: grid; line-height: 1.1; }
+.web-hero b { font: 700 1.5rem/1 var(--display); }
+.web-hero span { font-size: 0.72rem; opacity: 0.7; margin-top: 4px; }
+.web-form { padding: 12px; display: grid; gap: 8px; }
+.web-btn { background: var(--cobalt); }
+
+/* phone call */
+.ps-call { align-items: center; justify-content: center; gap: 8px; text-align: center; background: linear-gradient(180deg, #2b2f3a, #0f1115); color: #fff; padding: 20px; }
+.ps-call small { opacity: 0.7; }
+.ps-call b { font: 700 2rem/1 var(--display); }
+.call-ring { display: flex; gap: 6px; margin: 14px 0; animation: appear 0s 0s; }
+.call-ring i { width: 8px; height: 8px; border-radius: 50%; background: #fff; animation: blink 1s infinite; }
+.call-ring i:nth-child(2) { animation-delay: 0.2s; } .call-ring i:nth-child(3) { animation-delay: 0.4s; }
+.call-miss { opacity: 0; padding: 7px 12px; border-radius: 999px; background: #dc2626; font-weight: 700; font-size: 0.78rem; animation: appear 0.4s var(--ease) var(--d) forwards; }
+.call-btn { margin-top: 40px; width: 54px; height: 54px; border-radius: 50%; background: #dc2626 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='white' d='M12 9c-1.6 0-3.2.3-4.6.7v3.1c0 .4-.2.7-.6.9-1 .5-1.9 1.1-2.6 1.8-.2.2-.4.3-.7.3s-.5-.1-.7-.3L.3 13c-.2-.2-.3-.4-.3-.7s.1-.5.3-.7C3.4 8.7 7.5 7 12 7s8.6 1.7 11.7 4.6c.2.2.3.4.3.7s-.1.5-.3.7l-2.5 2.5c-.2.2-.4.3-.7.3s-.5-.1-.7-.3c-.8-.7-1.7-1.3-2.6-1.8-.3-.2-.6-.5-.6-.9V9.7C15.2 9.3 13.6 9 12 9z'/%3E%3C/svg%3E") center / 26px no-repeat; }
+
 /* ---------- responsive ---------- */
 @media (max-width: 1180px) {
   .flowx { grid-template-columns: 240px 40px 170px 40px minmax(0, 1fr); }
