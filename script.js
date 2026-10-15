@@ -18,7 +18,8 @@
 
   /* ---------- smooth scroll ---------- */
   let lenis = null;
-  if (window.Lenis) {
+  // smooth scrolling only for mouse/trackpad; touch devices keep native scrolling
+  if (window.Lenis && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
     lenis = new window.Lenis({ duration: 1.15, smoothWheel: true });
     lenis.on("scroll", ScrollTrigger.update);
     gsap.ticker.add((t) => lenis.raf(t * 1000));

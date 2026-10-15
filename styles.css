@@ -29,8 +29,11 @@ body {
   color: var(--ink);
   font: 400 1.0625rem/1.65 var(--body);
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
 }
+/* clip sideways overflow without turning body into a scroll container
+   (overflow-x: hidden on body blocks touch scrolling inside iOS iframes) */
+html { overflow-x: clip; }
+@supports not (overflow: clip) { html { overflow-x: hidden; } }
 h1, h2, h3 { margin: 0; font-weight: 700; }
 p { margin: 0; }
 a { color: inherit; }
