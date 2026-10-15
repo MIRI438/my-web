@@ -84,23 +84,29 @@
   }
 
   // run the automation on a lead; `instant` skips the delays (used for seed data)
+  const STEP_MS = [0, 1000, 2000, 3200, 4100];
   function automate(lead, instant, onStep) {
     const t0 = lead.created.getTime();
     const hot = lead.score >= 80;
+    lead.running = !instant;
     const steps = [
-      [0, () => lead.events.push({ t: t0, text: `התקבל ליד מ${SOURCES[lead.src].name}: ${SOURCES[lead.src].channel}` })],
-      [600, () => autoOn("score") && lead.events.push({ t: t0 + 600, text: `AI סיווג: ${hot ? "ליד חם" : "ליד רגיל"} (ציון ${lead.score})` })],
-      [1200, () => lead.events.push({ t: t0 + 1200, text: `נוצר כרטיס ב־CRM ושויך ל${lead.agent}` })],
-      [2100, () => {
+      () => lead.events.push({ t: t0, text: `התקבל ליד מ${SOURCES[lead.src].name}: ${SOURCES[lead.src].channel}` }),
+      () => autoOn("score") && lead.events.push({ t: t0 + STEP_MS[1], text: `AI סיווג: ${hot ? "ליד חם" : "ליד רגיל"} (ציון ${lead.score})` }),
+      () => lead.events.push({ t: t0 + STEP_MS[2], text: `נוצר כרטיס ב־CRM ושויך ל${lead.agent}` }),
+      () => {
         if (!autoOn("reply")) return;
-        lead.events.push({ t: t0 + 2100, text: "נשלחה הודעת וואטסאפ אישית", msg: waText(lead) });
+        lead.events.push({ t: t0 + STEP_MS[3], text: "נשלחה הודעת וואטסאפ אישית", msg: waText(lead) });
         if (lead.stage === "new") lead.stage = "contacted";
-      }],
-      [2800, () => hot && autoOn("alert") && lead.events.push({ t: t0 + 2800, text: `התראה נשלחה ל${lead.agent}: ליד חם, כדאי להתקשר היום` })],
+      },
+      () => {
+        if (hot && autoOn("alert")) lead.events.push({ t: t0 + STEP_MS[4], text: `התראה נשלחה ל${lead.agent}: ליד חם, כדאי להתקשר היום` });
+        lead.running = false;
+      },
     ];
-    steps.forEach(([ms, fn], i) => {
-      if (instant) { fn(); return; }
-      setTimeout(() => { fn(); onStep && onStep(i); renderAll(); }, ms);
+    steps.forEach((fn, i) => {
+      const run = () => { fn(); lead.progress = i + 1; };
+      if (instant) { run(); return; }
+      setTimeout(() => { run(); onStep && onStep(i); renderAll(); }, STEP_MS[i]);
     });
   }
 
@@ -121,9 +127,6 @@
 
   /* ---------- demo stage (on the page) ---------- */
   const miniList = document.getElementById("mini-list");
-  const coreSteps = [...stage.querySelectorAll(".core__steps li")];
-  const coreMsg = stage.querySelector(".core__msg");
-  const orb = stage.querySelector(".core__orb");
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   stage.querySelectorAll(".src__btn").forEach((btn) => {
@@ -143,62 +146,24 @@
     input.value = "";
   });
 
-  function center(el) {
-    const a = el.getBoundingClientRect(), b = stage.getBoundingClientRect();
-    return [a.left - b.left + a.width / 2, a.top - b.top + a.height / 2];
-  }
-
-  function fly(from, to, color, ms) {
-    if (reduce) return Promise.resolve();
-    const p = document.createElement("span");
-    p.className = "packet";
-    p.style.setProperty("--c", color);
-    stage.appendChild(p);
-    const [x1, y1] = center(from), [x2, y2] = center(to);
-    const mx = (x1 + x2) / 2, my = Math.min(y1, y2) - 40;
-    const anim = p.animate([
-      { transform: `translate(${x1}px, ${y1}px) scale(0.4)`, opacity: 0 },
-      { transform: `translate(${mx}px, ${my}px) scale(1.15)`, opacity: 1, offset: 0.5 },
-      { transform: `translate(${x2}px, ${y2}px) scale(0.6)`, opacity: 0.9 },
-    ], { duration: ms, easing: "cubic-bezier(.5,0,.3,1)" });
-    return anim.finished.then(() => p.remove());
-  }
-
-  async function fire(src, fromEl, opts = {}) {
-    const lead = makeLead(src, opts);
-    const color = SOURCES[src].color;
+  // a lead arrives: open the CRM right away and let the visitor watch it happen
+  function fire(src, fromEl, opts = {}) {
     fromEl.classList.add("is-pulse");
     setTimeout(() => fromEl.classList.remove("is-pulse"), 500);
-    await fly(fromEl, orb, color, 700);
-    orb.classList.remove("is-hit"); void orb.offsetWidth; orb.classList.add("is-hit");
-    coreSteps.forEach((li) => li.classList.remove("on"));
-    coreMsg.hidden = true;
-    lead.created = new Date();
-    lead.fresh = true;
-    leads.push(lead);
-    automate(lead, false, (i) => {
-      const map = [0, 1, 2, 3];
-      if (map[i] !== undefined && coreSteps[map[i]]) coreSteps[map[i]].classList.add("on");
-      if (i === 2) fly(orb, miniList, color, 650);
-      if (i === 3 && autoOn("reply")) {
-        coreMsg.querySelector(".core__msg-to").textContent = `נשלח ל${lead.name} בוואטסאפ`;
-        coreMsg.querySelector("p").textContent = waText(lead);
-        coreMsg.hidden = false;
-      }
-      if (i === 3 && crmOpen) toast(`ליד חדש מ${SOURCES[src].name}: ${lead.name}`);
-    });
-    setTimeout(() => { lead.fresh = false; }, 6000);
+    if (!crmOpen) openCRM(fromEl);
+    if (view !== "board") setView("board");
+    setTimeout(() => {
+      const lead = makeLead(src, opts);
+      lead.created = new Date();
+      lead.fresh = true;
+      leads.push(lead);
+      toast(`ליד חדש נכנס מ${SOURCES[src].name}: ${lead.name}`);
+      renderAll();
+      setTimeout(() => openDrawer(lead.id), reduce ? 0 : 700);
+      setTimeout(() => automate(lead, false), reduce ? 0 : 900);
+      setTimeout(() => { lead.fresh = false; renderAll(); }, 9000);
+    }, reduce ? 0 : 450);
   }
-
-  // fire two sample leads the first time the demo scrolls into view
-  let autoplayed = false;
-  new IntersectionObserver(([e], obs) => {
-    if (!e.isIntersecting || autoplayed) return;
-    autoplayed = true; obs.disconnect();
-    const btns = stage.querySelectorAll(".src__btn");
-    setTimeout(() => fire("whatsapp", btns[0]), 700);
-    setTimeout(() => fire("facebook", btns[2]), 4200);
-  }, { threshold: 0.45 }).observe(stage);
 
   function renderMini() {
     const last = [...leads].sort((a, b) => b.created - a.created).slice(0, 5);
@@ -221,8 +186,9 @@
   let openId = null;
   let simTimer = null;
   let lastFocus = null;
+  const seenEvents = new Map();
 
-  document.getElementById("crm-open").addEventListener("click", openCRM);
+  document.getElementById("crm-open").addEventListener("click", () => openCRM());
   document.getElementById("crm-close").addEventListener("click", closeCRM);
   document.getElementById("crm-sim").addEventListener("click", () => simulate(true));
   search.addEventListener("input", renderBoard);
@@ -232,8 +198,8 @@
   });
   crm.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", () => setView(b.dataset.view)));
 
-  function openCRM() {
-    lastFocus = document.activeElement;
+  function openCRM(returnTo) {
+    lastFocus = returnTo || document.activeElement;
     crm.hidden = false;
     crmOpen = true;
     document.body.classList.add("crm-lock");
@@ -369,6 +335,15 @@
     const s = SOURCES[l.src];
     const hot = l.score >= 80;
     const msg = [...l.events].reverse().find((e) => e.msg);
+    const seen = seenEvents.get(l.id) ?? (l.running ? 0 : l.events.length);
+    seenEvents.set(l.id, l.events.length);
+    const STEPS = ["הפנייה התקבלה", "AI סיווג ונתן ציון", "נוצר כרטיס ב־CRM", "נשלחה הודעת וואטסאפ"];
+    const prog = l.progress ?? 5;
+    const live = l.running || (Date.now() - l.created < 15000 && prog >= 4)
+      ? `<div class="run ${l.running ? "is-running" : "is-done"}">
+          <span class="run__title">${l.running ? '<i class="spin"></i>האוטומציה עובדת על הליד עכשיו' : "✓ הכול קרה לבד, בלי שאף אחד נגע"}</span>
+          <ol>${STEPS.map((t, i) => `<li class="${prog > i ? "on" : ""}">${t}</li>`).join("")}</ol>
+        </div>` : "";
     drawer.innerHTML = `
       <header class="drawer__head">
         <span class="avatar" style="--c:${s.color}">${esc(l.name.trim().charAt(0))}</span>
@@ -376,6 +351,7 @@
         <button class="drawer__close" aria-label="סגירת כרטיס הליד">×</button>
       </header>
       <div class="drawer__body">
+        ${live}
         <div class="drawer__actions">
           <button data-act="call">התקשרות</button><button data-act="wa">וואטסאפ</button><button data-act="mail">מייל</button>
         </div>
@@ -390,10 +366,10 @@
           <span class="ai__label">סיכום AI</span>
           <p>פנייה דרך ${s.name}, בנושא ${esc(l.interest)}. ציון ${l.score} מתוך 100. ${hot ? "סבירות גבוהה לסגירה, כדאי לחזור עוד היום." : "כדאי לשלוח תזכורת אם לא תהיה תשובה תוך יומיים."}</p>
         </div>
-        ${msg ? `<div class="wa"><span class="wa__label">ההודעה שהאוטומציה שלחה</span><p class="wa__bubble">${esc(msg.msg)}<small>${hhmmss(new Date(msg.t))} ✓✓</small></p></div>` : ""}
+        ${msg ? `<div class="wa ${l.events.indexOf(msg) >= seen ? "is-new" : ""}"><span class="wa__label">ההודעה שהאוטומציה שלחה</span><p class="wa__bubble">${esc(msg.msg)}<small>${hhmmss(new Date(msg.t))} ✓✓</small></p></div>` : ""}
         <div class="timeline">
           <span class="ai__label">מה קרה עם הליד</span>
-          <ol>${[...l.events].sort((a, b) => a.t - b.t).map((e) => `<li><time>${hhmmss(new Date(e.t))}</time><span>${esc(e.text)}</span></li>`).join("")}</ol>
+          <ol>${l.events.map((e, i) => ({ e, i })).sort((a, b) => a.e.t - b.e.t).map(({ e, i }) => `<li class="${i >= seen ? "is-new" : ""}"><time>${hhmmss(new Date(e.t))}</time><span>${esc(e.text)}</span></li>`).join("")}</ol>
         </div>
       </div>`;
     drawer.querySelector(".drawer__close").addEventListener("click", closeDrawer);
