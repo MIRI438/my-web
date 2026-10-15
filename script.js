@@ -65,17 +65,21 @@
 
   if (!seen && video && video.canPlayType) {
     loaderEl.classList.add("loader--video");
-    const fallback = setTimeout(() => { video.pause(); counterIntro(); }, 1800);
+    // if the video is slow to start, show the logo still (the poster) and move on
+    const fallback = setTimeout(() => { video.pause(); finish(); }, 2600);
+    let finished = false;
     const finish = () => {
+      if (finished) return;
+      finished = true;
       try { sessionStorage.setItem("mirai-intro", "1"); } catch (e) { /* storage blocked */ }
       gsap.to(".loader__brand", { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" });
       gsap.delayedCall(0.7, startIntro);
     };
-    video.addEventListener("playing", () => clearTimeout(fallback), { once: true });
+    video.addEventListener("playing", () => { clearTimeout(fallback); loaderEl.classList.add("is-playing"); }, { once: true });
     video.addEventListener("ended", finish, { once: true });
     loaderEl.querySelector(".loader__skip").addEventListener("click", () => { clearTimeout(fallback); video.pause(); finish(); });
     const p = video.play();
-    if (p && p.catch) p.catch(() => { clearTimeout(fallback); counterIntro(); });
+    if (p && p.catch) p.catch(() => { clearTimeout(fallback); finish(); });
   } else {
     counterIntro();
   }

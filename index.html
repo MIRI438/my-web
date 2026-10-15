@@ -16,7 +16,7 @@
 <body>
   <!-- preloader -->
   <div class="loader" aria-hidden="true">
-    <video class="loader__video" muted playsinline preload="auto">
+    <video class="loader__video" muted playsinline preload="auto" poster="assets/video/intro-poster.jpg">
       <source src="assets/video/intro.webm" type="video/webm" />
       <source src="assets/video/intro.mp4" type="video/mp4" />
     </video>
@@ -63,10 +63,18 @@
 
     <!-- MANIFESTO: words light up while scrolling -->
     <section class="manifesto" data-nav="dark">
-      <p class="manifesto__text" id="manifesto">
+      <div class="manifesto__grid">
+        <p class="manifesto__text" id="manifesto">
         כל יום, בכל עסק, מישהו מעתיק ליד מהמייל לאקסל, שולח את אותה הודעה בפעם המאה, ומחכה לדוח שמישהו אחר צריך להכין.
         אנחנו הופכים את כל זה לקוד שרץ לבד, בשקט, עשרים וארבע שעות ביממה.
       </p>
+        <div class="manifesto__media">
+          <video muted loop playsinline autoplay preload="metadata" poster="assets/video/chaos-poster.jpg" aria-label="דפים מתפזרים הופכים לרשת מסודרת של נתונים">
+            <source src="assets/video/chaos.webm" type="video/webm" />
+            <source src="assets/video/chaos.mp4" type="video/mp4" />
+          </video>
+        </div>
+      </div>
     </section>
 
     <!-- SERVICES: horizontal scroll -->
