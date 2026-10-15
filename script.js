@@ -39,8 +39,6 @@
   });
 
   /* ---------- loader -> hero intro ---------- */
-  // first visit in a session: play the logo reveal video; otherwise (or if the
-  // video cannot play quickly) fall back to the short counter
   const intro = gsap.timeline({ paused: true, onComplete: () => lenis && lenis.start() });
   intro
     .to(".loader", { yPercent: -100, duration: 1.1, ease: "power4.inOut" })
@@ -49,39 +47,7 @@
     .set(".loader", { display: "none" });
   let introStarted = false;
   const startIntro = () => { if (!introStarted) { introStarted = true; intro.play(); } };
-
-  const loaderEl = document.querySelector(".loader");
-  const video = loaderEl.querySelector(".loader__video");
-  const seen = false; // the logo reveal plays on every visit (it is short and skippable)
-
-  function counterIntro() {
-    loaderEl.classList.remove("loader--video");
-    const counter = { n: 0 };
-    const loadN = document.getElementById("load-n");
-    gsap.timeline({ onComplete: startIntro })
-      .to(counter, { n: 100, duration: seen ? 0.7 : 1.4, ease: "power2.inOut", onUpdate: () => (loadN.textContent = Math.round(counter.n)) })
-      .to(".loader__bar span", { scaleX: 1, duration: seen ? 0.7 : 1.4, ease: "power2.inOut" }, 0);
-  }
-
-  if (!seen && video && video.canPlayType) {
-    loaderEl.classList.add("loader--video");
-    // if the video is slow to start, show the logo still (the poster) and move on
-    const fallback = setTimeout(() => { video.pause(); finish(); }, 4000);
-    let finished = false;
-    const finish = () => {
-      if (finished) return;
-      finished = true;
-      gsap.to(".loader__brand", { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" });
-      gsap.delayedCall(0.7, startIntro);
-    };
-    video.addEventListener("playing", () => { clearTimeout(fallback); loaderEl.classList.add("is-playing"); }, { once: true });
-    video.addEventListener("ended", finish, { once: true });
-    loaderEl.querySelector(".loader__skip").addEventListener("click", () => { clearTimeout(fallback); video.pause(); finish(); });
-    const p = video.play();
-    if (p && p.catch) p.catch(() => { clearTimeout(fallback); finish(); });
-  } else {
-    counterIntro();
-  }
+  logoReveal(document.querySelector(".loader"), startIntro);
 
   /* ---------- nav: color per section + hide on scroll down ---------- */
   const nav = document.getElementById("nav");
@@ -210,6 +176,111 @@
      Hero WebGL: a field of points that morphs from a sphere
      into a knot of connections as you scroll.
      ========================================================= */
+  /* =========================================================
+     Logo reveal, drawn in code so it is sharp at any size and
+     never waits for a download: scattered particles connect
+     into a network and settle into the ring and dot of the logo.
+     ========================================================= */
+  function logoReveal(loader, done) {
+    const canvas = loader.querySelector(".loader__canvas");
+    const mark = loader.querySelector(".loader__mark");
+    const brand = loader.querySelector(".loader__brand");
+    const skip = loader.querySelector(".loader__skip");
+    const ctx = canvas.getContext("2d");
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const W = window.innerWidth, H = window.innerHeight;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    // geometry of the mark (same proportions as the SVG: ring r=14 in a 40 box)
+    const R = Math.min(W, H) * (W < 700 ? 0.17 : 0.11);
+    const cx = W / 2, cy = H / 2 - R * 0.15;
+    const stroke = R * (4.5 / 14);
+    const size = R * (40 / 14);
+    mark.style.width = mark.style.height = size + "px";
+    mark.style.left = cx - size / 2 + "px";
+    mark.style.top = cy - size / 2 + "px";
+    brand.style.top = cy + size / 2 + 14 + "px";
+
+    const rnd = (a, b) => a + Math.random() * (b - a);
+    const pts = [];
+    const RING = W < 700 ? 360 : 560, DOT = W < 700 ? 60 : 90;
+    for (let i = 0; i < RING; i++) {
+      const th = (i / RING) * (66 / 87.96) * Math.PI * 2; // the drawn part of the ring
+      const rr = R + rnd(-stroke / 2, stroke / 2);
+      pts.push({ tx: cx + rr * Math.cos(th), ty: cy + rr * Math.sin(th) });
+    }
+    const dx = cx + R * (11.2 / 14), dy = cy - R * (8.4 / 14), dr = R * (4.6 / 14);
+    for (let i = 0; i < DOT; i++) {
+      const a = rnd(0, Math.PI * 2), r = Math.sqrt(Math.random()) * dr;
+      pts.push({ tx: dx + r * Math.cos(a), ty: dy + r * Math.sin(a) });
+    }
+    pts.forEach((p) => {
+      const a = rnd(0, Math.PI * 2), d = rnd(0.35, 0.9) * Math.max(W, H);
+      p.sx = cx + Math.cos(a) * d; p.sy = cy + Math.sin(a) * d;
+      p.delay = rnd(0, 0.45); p.size = rnd(0.8, 2.2); p.tw = rnd(0, Math.PI * 2);
+    });
+
+    const maxLink = Math.pow(Math.min(W, H) * 0.22, 2);
+    const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+    const T_FORM = 2.5, T_MARK = 2.8, T_END = 3.9;
+    let start = null, raf, finished = false;
+
+    function finish() {
+      if (finished) return;
+      finished = true;
+      cancelAnimationFrame(raf);
+      gsap.to(mark, { opacity: 1, scale: 1, duration: 0.35 });
+      gsap.to(canvas, { opacity: 0, duration: 0.4 });
+      gsap.to(brand, { opacity: 1, y: 0, duration: 0.4 });
+      gsap.delayedCall(0.45, done);
+    }
+    skip.addEventListener("click", finish);
+
+    function frame(now) {
+      if (start === null) start = now;
+      const t = (now - start) / 1000;
+      ctx.clearRect(0, 0, W, H);
+      const pos = pts.map((p) => {
+        const k = ease(Math.min(Math.max((t - 0.15 - p.delay) / (T_FORM - p.delay), 0), 1));
+        const wob = (1 - k) * 18;
+        return [p.sx + (p.tx - p.sx) * k + Math.sin(t * 2 + p.tw) * wob, p.sy + (p.ty - p.sy) * k + Math.cos(t * 2 + p.tw) * wob, k];
+      });
+      // network lines between neighbours, strongest while the shape forms
+      const lineA = Math.max(0, Math.sin(Math.min(t / T_FORM, 1) * Math.PI)) * 0.6 * (t < T_MARK ? 1 : Math.max(0, 1 - (t - T_MARK) * 3));
+      if (lineA > 0.01) {
+        ctx.strokeStyle = `rgba(255,255,255,${lineA})`;
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        for (let i = 0; i < pos.length; i += 3) {
+          const j = (i + 17) % pos.length, m = (i + 53) % pos.length;
+          for (const q of [j, m]) {
+            const ddx = pos[i][0] - pos[q][0], ddy = pos[i][1] - pos[q][1];
+            if (ddx * ddx + ddy * ddy > maxLink) continue; // only link nearby particles
+            ctx.moveTo(pos[i][0], pos[i][1]); ctx.lineTo(pos[q][0], pos[q][1]);
+          }
+        }
+        ctx.stroke();
+      }
+      const fade = t < T_MARK ? 1 : Math.max(0, 1 - (t - T_MARK) * 2.5);
+      for (let i = 0; i < pos.length; i++) {
+        const [x, y, k] = pos[i];
+        ctx.fillStyle = `rgba(255,255,255,${(0.35 + 0.65 * k) * fade * Math.min(1, t * 3)})`;
+        ctx.beginPath(); ctx.arc(x, y, pts[i].size * (1 + (1 - k) * 0.8), 0, Math.PI * 2); ctx.fill();
+      }
+      // the crisp vector mark takes over from the particles
+      if (t > T_MARK - 0.25) {
+        const m = Math.min(1, (t - (T_MARK - 0.25)) / 0.45);
+        mark.style.opacity = m;
+        mark.style.transform = `scale(${0.92 + 0.08 * m})`;
+      }
+      if (t > T_MARK + 0.35) { brand.style.opacity = Math.min(1, (t - T_MARK - 0.35) / 0.4); brand.style.transform = "translate(-50%, 0)"; }
+      if (t >= T_END) { finish(); return; }
+      raf = requestAnimationFrame(frame);
+    }
+    raf = requestAnimationFrame(frame);
+  }
+
   function setupGL() {
     const canvas = document.getElementById("gl");
     if (!window.THREE || !canvas) return;
