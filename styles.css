@@ -152,14 +152,7 @@ html.anim .loader.loader--video { background: #2f5cc5; padding: 0; justify-conte
 
 /* ---------- manifesto ---------- */
 .manifesto { padding: 22vh var(--gutter-r) 22vh var(--gutter); background: var(--paper); }
-.manifesto__grid { display: grid; grid-template-columns: minmax(0, 1fr) min(26vw, 340px); gap: 6vw; align-items: center; }
-.manifesto__text { font: 700 clamp(2.6rem, 5.6vw, 6rem)/0.98 var(--display); max-width: 15em; min-width: 0; }
-.manifesto__media { position: relative; }
-.manifesto__media video { display: block; width: 100%; aspect-ratio: 9 / 16; object-fit: cover; border-radius: 28px; background: var(--ink); box-shadow: 0 40px 80px -30px rgba(12, 13, 16, 0.5); }
-@media (max-width: 899px) {
-  .manifesto__grid { grid-template-columns: 1fr; gap: 40px; }
-  .manifesto__media { width: min(70vw, 300px); justify-self: center; }
-}
+.manifesto__text { font: 700 clamp(2.6rem, 6.4vw, 6.4rem)/0.98 var(--display); max-width: 15em; }
 .manifesto__text .w { display: inline-block; }
 html.anim .manifesto__text .w { opacity: 0.12; }
 
